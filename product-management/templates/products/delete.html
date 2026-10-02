@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}
+商品削除
+{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+
+    <div class="col-md-6">
+
+        <div class="card shadow-sm">
+
+            <div class="card-body text-center">
+
+                <h3 class="text-danger mb-4">
+                    商品削除確認
+                </h3>
+
+                <p>
+                    以下の商品を削除しますか？
+                </p>
+
+                <h5 class="mb-4">
+                    商品A
+                </h5>
+
+                <a
+                    href="{{ url_for('product_detail', product_id=product_id) }}"
+                    class="btn btn-secondary"
+                >
+                    キャンセル
+                </a>
+
+                <a
+                    href="{{ url_for('products') }}"
+                    class="btn btn-danger"
+                >
+                    削除する
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

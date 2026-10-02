@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}
+在庫管理
+{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">
+    在庫管理
+</h2>
+
+<div class="card shadow-sm">
+
+    <div class="card-body">
+
+        <table class="table table-hover">
+
+            <thead class="table-dark">
+
+                <tr>
+                    <th>商品ID</th>
+                    <th>商品名</th>
+                    <th>在庫数</th>
+                    <th>在庫状態</th>
+                    <th>操作</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <tr>
+
+                    <td>1</td>
+
+                    <td>
+                        商品A
+                    </td>
+
+                    <td>
+                        50
+                    </td>
+
+                    <td>
+                        <span class="badge bg-success">
+                            在庫あり
+                        </span>
+                    </td>
+
+                    <td>
+                        <a
+                            href="{{ url_for('product_detail', product_id=1) }}"
+                            class="btn btn-sm btn-primary"
+                        >
+                            商品詳細
+                        </a>
+                    </td>
+
+                </tr>
+
+
+                <tr>
+
+                    <td>2</td>
+
+                    <td>
+                        商品B
+                    </td>
+
+                    <td>
+                        5
+                    </td>
+
+                    <td>
+                        <span class="badge bg-warning text-dark">
+                            少ない
+                        </span>
+                    </td>
+
+                    <td>
+                        <a
+                            href="{{ url_for('product_detail', product_id=2) }}"
+                            class="btn btn-sm btn-primary"
+                        >
+                            商品詳細
+                        </a>
+                    </td>
+
+                </tr>
+
+
+                <tr>
+
+                    <td>3</td>
+
+                    <td>
+                        商品C
+                    </td>
+
+                    <td>
+                        0
+                    </td>
+
+                    <td>
+                        <span class="badge bg-danger">
+                            在庫切れ
+                        </span>
+                    </td>
+
+                    <td>
+                        <a
+                            href="{{ url_for('product_detail', product_id=3) }}"
+                            class="btn btn-sm btn-primary"
+                        >
+                            商品詳細
+                        </a>
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

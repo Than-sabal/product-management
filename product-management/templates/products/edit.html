@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}
+商品編集
+{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">
+    商品編集
+</h2>
+
+<div class="card shadow-sm">
+
+    <div class="card-body">
+
+        <div class="mb-3">
+
+            <label class="form-label">
+                商品名
+            </label>
+
+            <input
+                type="text"
+                class="form-control"
+                value="商品A"
+            >
+
+        </div>
+
+
+        <div class="mb-3">
+
+            <label class="form-label">
+                カテゴリ
+            </label>
+
+            <select class="form-select">
+
+                <option selected>
+                    食品
+                </option>
+
+                <option>
+                    飲料
+                </option>
+
+                <option>
+                    日用品
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="mb-3">
+
+            <label class="form-label">
+                価格
+            </label>
+
+            <input
+                type="number"
+                class="form-control"
+                value="1000"
+            >
+
+        </div>
+
+
+        <div class="mb-3">
+
+            <label class="form-label">
+                在庫数
+            </label>
+
+            <input
+                type="number"
+                class="form-control"
+                value="50"
+            >
+
+        </div>
+
+
+        <div class="mb-3">
+
+            <label class="form-label">
+                商品説明
+            </label>
+
+            <textarea
+                class="form-control"
+                rows="5"
+            >商品の説明です。</textarea>
+
+        </div>
+
+
+        <a
+            href="{{ url_for('product_detail', product_id=product_id) }}"
+            class="btn btn-secondary"
+        >
+            キャンセル
+        </a>
+
+        <a
+            href="{{ url_for('product_detail', product_id=product_id) }}"
+            class="btn btn-primary"
+        >
+            更新
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

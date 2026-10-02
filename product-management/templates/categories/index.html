@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}
+カテゴリ管理
+{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">
+    カテゴリ管理
+</h2>
+
+<div class="card shadow-sm">
+
+    <div class="card-body">
+
+        <div class="d-flex justify-content-end mb-3">
+
+            <button class="btn btn-primary">
+                ＋ カテゴリ登録
+            </button>
+
+        </div>
+
+
+        <table class="table table-hover">
+
+            <thead class="table-dark">
+
+                <tr>
+                    <th>ID</th>
+                    <th>カテゴリ名</th>
+                    <th>商品数</th>
+                    <th>操作</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <tr>
+                    <td>1</td>
+                    <td>食品</td>
+                    <td>50</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning">
+                            編集
+                        </button>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>2</td>
+                    <td>飲料</td>
+                    <td>30</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning">
+                            編集
+                        </button>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>3</td>
+                    <td>日用品</td>
+                    <td>40</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning">
+                            編集
+                        </button>
+                    </td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

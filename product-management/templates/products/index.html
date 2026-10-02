@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}
+商品一覧
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h2>商品一覧</h2>
+
+    <a
+        href="{{ url_for('product_create') }}"
+        class="btn btn-primary"
+    >
+        ＋ 商品登録
+    </a>
+
+</div>
+
+
+<div class="card shadow-sm">
+
+    <div class="card-body">
+
+        <div class="row mb-3">
+
+            <div class="col-md-6">
+
+                <input
+                    type="text"
+                    class="form-control"
+                    placeholder="商品名を検索"
+                >
+
+            </div>
+
+            <div class="col-md-3">
+
+                <select class="form-select">
+
+                    <option>すべてのカテゴリ</option>
+                    <option>食品</option>
+                    <option>飲料</option>
+                    <option>日用品</option>
+
+                </select>
+
+            </div>
+
+            <div class="col-md-2">
+
+                <button class="btn btn-secondary">
+                    検索
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle">
+
+                <thead class="table-dark">
+
+                    <tr>
+                        <th>ID</th>
+                        <th>商品名</th>
+                        <th>カテゴリ</th>
+                        <th>価格</th>
+                        <th>在庫</th>
+                        <th>操作</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr>
+                        <td>1</td>
+                        <td>商品A</td>
+                        <td>食品</td>
+                        <td>1,000円</td>
+                        <td>50</td>
+                        <td>
+                            <a
+                                href="{{ url_for('product_detail', product_id=1) }}"
+                                class="btn btn-sm btn-info text-white"
+                            >
+                                詳細
+                            </a>
+
+                            <a
+                                href="{{ url_for('product_edit', product_id=1) }}"
+                                class="btn btn-sm btn-warning"
+                            >
+                                編集
+                            </a>
+                        </td>
+                    </tr>
+
+
+                    <tr>
+                        <td>2</td>
+                        <td>商品B</td>
+                        <td>飲料</td>
+                        <td>500円</td>
+                        <td>120</td>
+                        <td>
+                            <a
+                                href="{{ url_for('product_detail', product_id=2) }}"
+                                class="btn btn-sm btn-info text-white"
+                            >
+                                詳細
+                            </a>
+
+                            <a
+                                href="{{ url_for('product_edit', product_id=2) }}"
+                                class="btn btn-sm btn-warning"
+                            >
+                                編集
+                            </a>
+                        </td>
+                    </tr>
+
+
+                    <tr>
+                        <td>3</td>
+                        <td>商品C</td>
+                        <td>日用品</td>
+                        <td>2,000円</td>
+                        <td>25</td>
+                        <td>
+                            <a
+                                href="{{ url_for('product_detail', product_id=3) }}"
+                                class="btn btn-sm btn-info text-white"
+                            >
+                                詳細
+                            </a>
+
+                            <a
+                                href="{{ url_for('product_edit', product_id=3) }}"
+                                class="btn btn-sm btn-warning"
+                            >
+                                編集
+                            </a>
+                        </td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

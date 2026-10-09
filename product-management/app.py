@@ -91,7 +91,7 @@ def index():
 def login():
    if request.method == "POST":
        return redirect(url_for("products"))
-   return render_template("login_3.html")
+   return render_template("login.html")
 @app.route("/logout")
 def logout():
    return redirect(url_for("login"))

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}トップページ | Pattern 1{% endblock %}
+{% block content %}
+<div class="container py-4">
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+<div>
+<h2 class="fw-bold text-dark mb-1">♻️ ごみ分別モニタリング</h2>
+<p class="text-muted small mb-0">リアルタイムの検知状況とシステムステータス</p>
+</div>
+<span class="badge bg-success-subtle text-success border border-success px-3 py-2 rounded-pill">
+           ● センサー稼働中
+</span>
+</div>
+<!-- Status Cards -->
+<div class="row g-3 mb-4">
+<div class="col-md-4">
+<div class="card border-0 shadow-sm bg-white p-3 border-start border-4 border-success">
+<div class="text-muted small">本日の検知数</div>
+<div class="fs-2 fw-bold text-dark">0 <span class="fs-6 text-muted">件</span></div>
+</div>
+</div>
+<div class="col-md-4">
+<div class="card border-0 shadow-sm bg-white p-3 border-start border-4 border-primary">
+<div class="text-muted small">今月の回収報告</div>
+<div class="fs-2 fw-bold text-dark">12 <span class="fs-6 text-muted">件</span></div>
+</div>
+</div>
+<div class="col-md-4">
+<div class="card border-0 shadow-sm bg-white p-3 border-start border-4 border-warning">
+<div class="text-muted small">注意事項・アラート</div>
+<div class="fs-2 fw-bold text-dark">なし</div>
+</div>
+</div>
+</div>
+<!-- Main Alert Area -->
+<div id="normal-state" class="card shadow-sm border-0 text-center p-5">
+<div class="display-1 text-success mb-3">✅</div>
+<h3 class="fw-bold text-success">現在、危険物は検知されていません</h3>
+<p class="text-muted">ごみ投入口は 정상 状態です。</p>
+<div class="mt-4">
+<button type="button" class="btn btn-outline-danger" onclick="showWarning()">
+               ⚠️ 警告テスト (デモ)
+</button>
+</div>
+</div>
+<div id="warning-state" class="card shadow-lg border-danger text-center p-5 d-none bg-danger-subtle">
+<div class="display-1 text-danger mb-3">🚨</div>
+<h2 class="fw-bold text-danger">危険物を検知しました！</h2>
+<p class="fs-5 text-dark">金属・リチウムイオン電池等の可能性があります。</p>
+<div class="mt-4">
+<button type="button" class="btn btn-secondary" onclick="showNormal()">
+               🔄 解除して戻る
+</button>
+</div>
+</div>
+</div>
+<script>
+   function showWarning() {
+       document.getElementById('normal-state').classList.add('d-none');
+       document.getElementById('warning-state').classList.remove('d-none');
+   }
+   function showNormal() {
+       document.getElementById('warning-state').classList.add('d-none');
+       document.getElementById('normal-state').classList.remove('d-none');
+   }
+</script>
+{% endblock %}

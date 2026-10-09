@@ -86,12 +86,12 @@ app = Flask(__name__)
 @app.route("/")
 def index():
    return redirect(url_for("login"))
-# login route မှာ GET ရော POST ရော လက်ခံအောင် နဲ့ POST ဖြစ်ရင် /products သို့ ရောက်သွားအောင် ပြင်ထားပါတယ်
+# login route
 @app.route("/login", methods=["GET", "POST"])
 def login():
    if request.method == "POST":
        return redirect(url_for("products"))
-   return render_template("login.html")
+   return render_template("login_3.html")
 @app.route("/logout")
 def logout():
    return redirect(url_for("login"))
@@ -106,7 +106,7 @@ def dashboard():
 # =========================
 @app.route("/products")
 def products():
-   return render_template("products/index.html")
+   return render_template("products/index_3.html")
 @app.route("/products/create")
 def product_create():
    return render_template("products/create.html")

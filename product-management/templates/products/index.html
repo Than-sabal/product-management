@@ -1,163 +1,74 @@
 {% extends "base.html" %}
-
 {% block title %}
-商品一覧
+検知情報確認 | ごみ分別ナビ
 {% endblock %}
-
 {% block content %}
-
+<div class="container py-4">
+<!-- Header -->
 <div class="d-flex justify-content-between align-items-center mb-4">
-
-    <h2>商品一覧</h2>
-
-    <a
-        href="{{ url_for('product_create') }}"
-        class="btn btn-primary"
-    >
-        ＋ 商品登録
-    </a>
-
+<div>
+<h2 class="fw-bold text-dark">🔍 危険物検知モニタリング</h2>
+<p class="text-muted mb-0">ごみ投入口 センサー監視システム</p>
 </div>
-
-
-<div class="card shadow-sm">
-
-    <div class="card-body">
-
-        <div class="row mb-3">
-
-            <div class="col-md-6">
-
-                <input
-                    type="text"
-                    class="form-control"
-                    placeholder="商品名を検索"
-                >
-
-            </div>
-
-            <div class="col-md-3">
-
-                <select class="form-select">
-
-                    <option>すべてのカテゴリ</option>
-                    <option>食品</option>
-                    <option>飲料</option>
-                    <option>日用品</option>
-
-                </select>
-
-            </div>
-
-            <div class="col-md-2">
-
-                <button class="btn btn-secondary">
-                    検索
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <div class="table-responsive">
-
-            <table class="table table-hover align-middle">
-
-                <thead class="table-dark">
-
-                    <tr>
-                        <th>ID</th>
-                        <th>商品名</th>
-                        <th>カテゴリ</th>
-                        <th>価格</th>
-                        <th>在庫</th>
-                        <th>操作</th>
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                    <tr>
-                        <td>1</td>
-                        <td>商品A</td>
-                        <td>食品</td>
-                        <td>1,000円</td>
-                        <td>50</td>
-                        <td>
-                            <a
-                                href="{{ url_for('product_detail', product_id=1) }}"
-                                class="btn btn-sm btn-info text-white"
-                            >
-                                詳細
-                            </a>
-
-                            <a
-                                href="{{ url_for('product_edit', product_id=1) }}"
-                                class="btn btn-sm btn-warning"
-                            >
-                                編集
-                            </a>
-                        </td>
-                    </tr>
-
-
-                    <tr>
-                        <td>2</td>
-                        <td>商品B</td>
-                        <td>飲料</td>
-                        <td>500円</td>
-                        <td>120</td>
-                        <td>
-                            <a
-                                href="{{ url_for('product_detail', product_id=2) }}"
-                                class="btn btn-sm btn-info text-white"
-                            >
-                                詳細
-                            </a>
-
-                            <a
-                                href="{{ url_for('product_edit', product_id=2) }}"
-                                class="btn btn-sm btn-warning"
-                            >
-                                編集
-                            </a>
-                        </td>
-                    </tr>
-
-
-                    <tr>
-                        <td>3</td>
-                        <td>商品C</td>
-                        <td>日用品</td>
-                        <td>2,000円</td>
-                        <td>25</td>
-                        <td>
-                            <a
-                                href="{{ url_for('product_detail', product_id=3) }}"
-                                class="btn btn-sm btn-info text-white"
-                            >
-                                詳細
-                            </a>
-
-                            <a
-                                href="{{ url_for('product_edit', product_id=3) }}"
-                                class="btn btn-sm btn-warning"
-                            >
-                                編集
-                            </a>
-                        </td>
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </div>
-
+<div>
+<span class="badge bg-success fs-6 px-3 py-2 rounded-pill">
+               金属センサー: 正常稼働中 🟢
+</span>
 </div>
-
+</div>
+<!-- 通常時：検知情報を確認する -->
+<div id="normal-state" class="card shadow-sm border-0 mb-4 mx-auto" style="max-width: 800px;">
+<div class="card-header bg-dark text-white py-3 text-center">
+<h4 class="fw-bold mb-0">ごみ投入口 リアルタイム状態確認</h4>
+</div>
+<div class="card-body p-5 text-center">
+<div class="mb-4">
+<div class="display-1 text-success mb-3">✅</div>
+<h3 class="fw-bold text-success">現在、危険物は検知されていません</h3>
+<p class="text-muted fs-5 mt-2">ごみを投入口へ入れてください。</p>
+</div>
+<hr class="my-4">
+<!-- デモ用：金属検知切替ボタン -->
+<div class="bg-light p-3 rounded-3 border">
+<p class="small text-secondary mb-2">※【デモ用】金属を検知した場合の画面表示を切替:</p>
+<button type="button" class="btn btn-outline-danger fw-bold" onclick="showWarning()">
+                   ⚠️ 金属検知テスト (警告画面を表示)
+</button>
+</div>
+</div>
+</div>
+<!-- 金属検知時：警告表示・撮影・保存 -->
+<div id="warning-state" class="card shadow-lg border-danger mx-auto d-none" style="max-width: 800px;">
+<div class="card-header bg-danger text-white py-3 text-center">
+<h2 class="fw-bold mb-0">🚨 危険物を検知しました！</h2>
+</div>
+<div class="card-body p-5 text-center">
+<h3 class="fw-bold text-danger mb-3">【警告】金属・危険物が含まれています</h3>
+<p class="fs-4 text-dark mb-4">
+               リチウムイオン電池・モバイルバッテリー等の可能性があります。<br>
+<strong>一般ごみへの投入は絶対におやめください。</strong>
+</p>
+<div class="alert alert-secondary d-inline-block px-4 py-3 mb-4">
+<div class="fw-bold fs-5 text-dark">
+                   📷 人物撮影（動画・写真）および 検知情報を保存しました
+</div>
+</div>
+<div>
+<button type="button" class="btn btn-secondary btn-sm" onclick="showNormal()">
+                   🔄 確認画面に戻る
+</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+   function showWarning() {
+       document.getElementById('normal-state').classList.add('d-none');
+       document.getElementById('warning-state').classList.remove('d-none');
+   }
+   function showNormal() {
+       document.getElementById('warning-state').classList.add('d-none');
+       document.getElementById('normal-state').classList.remove('d-none');
+   }
+</script>
 {% endblock %}

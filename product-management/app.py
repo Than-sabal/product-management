@@ -106,7 +106,7 @@ def dashboard():
 # =========================
 @app.route("/products")
 def products():
-   return render_template("products/index_3.html")
+   return render_template("products/index.html")
 @app.route("/products/create")
 def product_create():
    return render_template("products/create.html")

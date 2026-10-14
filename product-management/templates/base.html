@@ -22,29 +22,29 @@
 <div class="col-md-3 col-lg-2 bg-dark text-white p-3 min-vh-100">
 <p class="text-secondary small fw-bold mb-3 px-2">【自治体職員 機能】</p>
 <div class="nav flex-column nav-pills">
-<!-- 1. 検知情報を確認する (Top Page / Products) -->
-<a href="{{ url_for('products') }}" class="nav-link text-white mb-2 fs-6 hover-bg">
-   🔍 検知情報を確認する
+<!-- 1. 検知情報を確認する -->
+<a href="{{ url_for('alerts') }}" class="nav-link text-white mb-2 fs-6 hover-bg">
+  🔍 検知情報を確認する
 </a>
-<!-- 2. 検知履歴を確認する (Dashboard) -->
-<a href="{{ url_for('dashboard') }}" class="nav-link text-white mb-2 fs-6 hover-bg">
-   📜 検知履歴を確認する
+<!-- 2. 検知履歴を確認する -->
+<a href="{{ url_for('history') }}" class="nav-link text-white mb-2 fs-6 hover-bg">
+  📜 検知履歴を確認する
 </a>
-<!-- 3. 回収員へ報告する (Dashboard) -->
-<a href="{{ url_for('dashboard') }}" class="nav-link text-white mb-2 fs-6 hover-bg">
-   📢 回収員へ報告する
+<!-- 3. 回収員へ報告する -->
+<a href="{{ url_for('report') }}" class="nav-link text-white mb-2 fs-6 hover-bg">
+  📢 回収員へ報告する
 </a>
 <hr class="text-secondary my-3">
 <!-- 4. ログアウト -->
 <a href="{{ url_for('logout') }}" class="nav-link text-warning mb-2 fs-6 hover-bg">
-   🔑 ログアウト
+  🔑 ログアウト
 </a>
 </div>
 </div>
 <!-- Main Content Area -->
 <div class="col-md-9 col-lg-10 p-4 bg-light">
-   {% block content %}
-   {% endblock %}
+  {% block content %}
+  {% endblock %}
 </div>
 </div>
 </div>

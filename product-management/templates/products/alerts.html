@@ -1,25 +1,34 @@
 {% extends "base.html" %}
 {% block title %}
-検知情報確認 | ごみ分別ナビ
+危険物検知情報 - ごみ分別ナビ
 {% endblock %}
 {% block content %}
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<title>検知情報確認</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light p-4">
-<div class="container">
+<div class="container mt-4">
 <h2>⚠️ 危険物検知情報</h2>
-<p class="text-muted">現在検知されている危険物リストです。</p>
-<div class="card p-3 shadow-sm mb-3">
-<h5>スプレー缶 (不燃ごみエリア)</h5>
-<p class="text-danger mb-0">ステータス: 未処理・要確認</p>
+<p class="text-muted">ごみ投入口において、センサーが危険物の反応を検知しました。</p>
+<!-- 検知詳細 ＆ 警告表示 -->
+<div class="card shadow-sm mt-4">
+<div class="card-header bg-warning text-dark fw-bold">
+           🚨 新規検知アラート (要確認)
 </div>
-<a href="{{ url_for('products') }}" class="btn btn-secondary">← トップへ戻る</a>
+<div class="card-body">
+<div class="mb-3">
+<label class="form-label fw-bold">検知日時</label>
+<input type="text" class="form-control bg-white" value="2026/10/14 10:15" readonly>
 </div>
-</body>
-</html>
- {% endblock %}
+<div class="mb-3">
+<label class="form-label fw-bold">設置場所（危険物あり）</label>
+<input type="text" class="form-control bg-white fw-bold text-danger" value="A地区 ごみ投入口" readonly>
+</div>
+
+<div class="mb-4">
+<label class="form-label fw-bold">判定ステータス</label>
+<div class="alert alert-danger fs-5 fw-bold text-center m-0" role="alert">
+                   ⚠️ 危険物の可能性があります
+</div>
+
+<a href="{{ url_for('products') }}" class="btn btn-secondary">トップへ戻る</a>
+</div>
+</div>
+</div>
+{% endblock %}

@@ -13,7 +13,11 @@
 <h4 class="m-0 fw-bold">♻️ ごみ分別ナビ</h4>
 <div>
 <span class="me-3">山田 太郎 さん (〇〇市)</span>
-<a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm rounded-pill">ログアウト</a>
+<a href="{{ url_for('logout') }}"
+   class="btn btn-outline-light btn-sm rounded-pill"
+   onclick="return confirm('ログアウトしますか？');">
+    ログアウト
+</a>
 </div>
 </div>
 <div class="container-fluid">
@@ -36,8 +40,10 @@
 </a>
 <hr class="text-secondary my-3">
 <!-- 4. ログアウト -->
-<a href="{{ url_for('logout') }}" class="nav-link text-warning mb-2 fs-6 hover-bg">
-  🔑 ログアウト
+<a href="{{ url_for('logout') }}"
+   class="nav-link text-warning mb-2 fs-6 hover-bg"
+   onclick="return confirm('ログアウトしますか？');">
+    🔑 ログアウト
 </a>
 </div>
 </div>

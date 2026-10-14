@@ -36,8 +36,10 @@
 </a>
 <hr class="text-secondary my-3">
 <!-- 4. ログアウト -->
-<a href="{{ url_for('logout') }}" class="nav-link text-warning mb-2 fs-6 hover-bg">
-  🔑 ログアウト
+<a href="{{ url_for('logout') }}"
+   class="nav-link text-warning mb-2 fs-6 hover-bg"
+   onclick="return confirm('ログアウトしますか？');">
+    🔑 ログアウト
 </a>
 </div>
 </div>

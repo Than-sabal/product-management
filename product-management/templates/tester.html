@@ -1,0 +1,17 @@
+<div class="container mt-5">
+<div class="card shadow p-4 text-center">
+<h2 class="mb-4 text-primary">テスター専用コントロールパネル</h2>
+
+<form action="{{ url_for('trigger_test_alert') }}" method="POST">
+<button type="submit" class="btn btn-danger fw-bold shadow w-100" style="font-size: 2.5rem; padding: 20px 10px;">
+       🛑 金属感知
+</button>
+</form>
+<div>
+    {% if has_alert %}
+<div class="alert alert-danger mt-4" role="alert">
+           ⚠️ ユースケース図の処理（警告表示・人物撮影・情報保存・情報送信）が正常に実行されました！
+</div>
+       {% endif %}
+</div>
+</div>

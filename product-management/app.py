@@ -86,6 +86,23 @@ def reset_alert():
 
     return redirect(url_for('products'))
 
+@app.route("/tester")
+
+def tester_panel():
+
+    return render_template("tester.html")
+
+@app.route("/trigger-test-alert", methods=["POST"])
+
+def trigger_test_alert():
+
+    global has_alert
+
+    has_alert = True
+
+    return redirect(url_for('tester_panel'))
+ 
+
 if __name__ == "__main__":
 
     app.run(

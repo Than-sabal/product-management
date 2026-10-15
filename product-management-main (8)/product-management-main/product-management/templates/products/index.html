@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}
+
+危険物検知モニタリング - ごみ分別ナビ
+
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h2>🔍 危険物検知モニタリング</h2>
+<p class="text-muted">ごみ投入口 センサー監視システム</p>
+</div>
+<div>
+
+            {% if has_alert %}
+<span class="badge bg-danger fs-6">⚠️ 危険物検知中</span>
+
+            {% else %}
+<span class="badge bg-success fs-6">金属センサー: 正常稼働中 🟢</span>
+
+            {% endif %}
+</div>
+</div>
+<!-- リアルタイム状態確認カード -->
+<div class="card shadow-sm text-center mt-4">
+<div class="card-header bg-dark text-white fw-bold">
+
+            ごみ投入口 リアルタイム状態確認
+</div>
+<div class="card-body py-5">
+
+            {% if has_alert %}
+<div class="mb-3">
+<div class="display-1 text-danger">⚠️</div>
+</div>
+<h3 class="card-title text-danger fw-bold mb-3">危険物可能性あるものが検知されました！</h3>
+<p class="card-text text-muted mb-4">センサーが金属反応を検知しました。詳細を確認してください。</p>
+<a href="{{ url_for('alerts') }}" class="btn btn-danger btn-lg fw-bold shadow">
+
+                    🔍 検知情報を確認する
+</a>
+
+            {% else %}
+            
+<div class="mb-3">
+<div class="display-1 text-success">✔️</div>
+</div>
+<h3 class="card-title text-success fw-bold">現在、危険物は検知されていません</h3>
+            {% endif %}
+</div>
+</div>
+</div>
+
+{% endblock %}
+ 

@@ -10,7 +10,7 @@ from flask import (
 from werkzeug.security import check_password_hash
 
 app = Flask(__name__)
-has_alert = False
+has_alert = True
 app.secret_key = os.environ.get(
     "FLASK_SECRET_KEY",
     "development-key-change-me"

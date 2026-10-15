@@ -10,6 +10,7 @@ from flask import (
 from werkzeug.security import check_password_hash
 
 app = Flask(__name__)
+has_alert = False
 app.secret_key = os.environ.get(
     "FLASK_SECRET_KEY",
     "development-key-change-me"
@@ -120,16 +121,26 @@ def logout():
 @app.route("/products")
 @login_required
 def products():
-    return render_template("products/index.html")
+    return render_template(
+        "products/index.html",
+        has_alert=has_alert
+    )
 
 
 # =========================
 # アラート一覧
 # =========================
+
 @app.route("/products/alerts")
 @login_required
 def alerts():
-    return render_template("products/alerts.html")
+    global has_alert
+    has_alert = True
+
+    return render_template(
+        "products/alerts.html"
+    )
+
 
 
 # =========================
@@ -148,6 +159,27 @@ def history():
 @login_required
 def report():
     return render_template("products/report.html")
+# 警告
+# =========================
+# 警告を発生させる（動作確認用）
+# =========================
+@app.route("/trigger-alert", methods=["POST"])
+@login_required
+def trigger_alert():
+    global has_alert
+    has_alert = True
+    return redirect(url_for("products"))
+
+
+# =========================
+# 警告を解除する（動作確認用）
+# =========================
+@app.route("/reset-alert", methods=["POST"])
+@login_required
+def reset_alert():
+    global has_alert
+    has_alert = False
+    return redirect(url_for("products"))
 
 
 # =========================

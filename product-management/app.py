@@ -1,9 +1,11 @@
 from flask import Flask, render_template, redirect, url_for, request
+from datetime import datetime
 
 app = Flask(__name__)
 
 has_alert = False
-
+detection_history =[]
+report_history = []
 # =========================
 
 # ログイン
@@ -50,7 +52,7 @@ def products():
 
 def alerts():
 
-    return render_template("products/alerts.html")
+    return render_template("products/alerts.html",has_alert= has_alert)
 
 @app.route("/products/history")
 
@@ -101,7 +103,49 @@ def trigger_test_alert():
     has_alert = True
 
     return redirect(url_for('tester_panel'))
+
+#回収員 へ 報告する
+@app.route("/products/report-form", methods=["GET"])
+
+def report_form():
+
+    return render_template("products/report_form.html")
+
+#報告 Form 
+
+@app.route("/send-report", methods=["POST"])
+
+def send_report():
+
+    current_time = datetime.now().strftime("%Y/%m/%d %H:%M")
+
+    memo = request.form.get("memo", "特記事項なし")
+
+    new_report = {
+
+        "time": current_time,
+
+        "target": "回収員 (Staff)",
+
+        "message": f"危険物回収依頼を送信しました。(メモ: {memo})"
+
+    }
+
+    report_history.insert(0, new_report)
+
+    #報告履歴 
+
+    return redirect(url_for('report_history_page'))
+
+#報告履歴 
+
+@app.route("/products/report-history", methods=["GET"])
+
+def report_history_page():
+
+    return render_template("products/report_history.html", report_list=report_history)
  
+
 
 if __name__ == "__main__":
 

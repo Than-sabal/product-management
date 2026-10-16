@@ -2,9 +2,9 @@
 <div class="card shadow p-4 text-center">
 <h2 class="mb-4 text-primary">テスター専用コントロールパネル</h2>
 
-<form action="{{ url_for('trigger_test_alert') }}" method="POST">
-<button type="submit" class="btn btn-danger fw-bold shadow w-100" style="font-size: 2.5rem; padding: 20px 10px;">
-       🛑 金属感知
+<form action="/trigger_alert" method="POST">
+<button type="submit" class="btn btn-danger btn-lg px-4 py-3 rounded-pill fw-bold shadow-sm">
+<i class="bi bi-exclamation-triangle-fill me-2"></i> 金属検知
 </button>
 </form>
 <div>

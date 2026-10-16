@@ -40,15 +40,15 @@
 <p class="card-text text-muted mb-4">センサーが金属反応を検知しました。詳細を確認してください。</p>
 <a href="{{ url_for('alerts') }}" class="btn btn-danger btn-lg fw-bold shadow">
 
-                    🔍 検知情報を確認する
+                🔍 検知情報を確認する
 </a>
 
             {% else %}
-            
 <div class="mb-3">
 <div class="display-1 text-success">✔️</div>
 </div>
 <h3 class="card-title text-success fw-bold">現在、危険物は検知されていません</h3>
+
             {% endif %}
 </div>
 </div>

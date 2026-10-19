@@ -13,9 +13,10 @@
 <div class="card shadow-sm border-0 rounded-4 mt-4">
 <div class="card-body p-4">
 <form action="{{ url_for('send_report') }}" method="POST">
+<!-- 送信先  -->
 <div class="mb-3">
-<label class="form-label fw-bold">送信先</label>
-<input type="text" class="form-control bg-light" value="回収員 (Staff チーム)" readonly>
+<label class="form-label fw-bold">送信先 (回収員・担当者名)</label>
+<input type="text" name="target" class="form-control" placeholder="" value="" required>
 </div>
 <div class="mb-3">
 <label class="form-label fw-bold">報告内容 / メモ</label>

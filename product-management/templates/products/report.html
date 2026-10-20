@@ -24,9 +24,9 @@
 </div>
 <div class="d-flex justify-content-between align-items-center mt-4">
 <a href="{{ url_for('alerts') }}" class="btn btn-outline-secondary rounded-pill px-4">戻る</a>
-<button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
-<i class="bi bi-send-fill me-1"></i> 報告を送信する
-</button>
+<form action="{{ url_for('send_report') }}" method="POST">
+<button type="submit" class="btn btn-danger">報告を送信する</button>
+</form>
 </div>
 </form>
 </div>

@@ -135,7 +135,7 @@ def send_report():
 
     #報告履歴 
 
-    return redirect(url_for('report_history_page'))
+    return render_template('products/report_complete.html')
 
 #報告履歴 
 
@@ -144,8 +144,13 @@ def send_report():
 def report_history_page():
 
     return render_template("products/report_history.html", report_list=report_history)
- 
 
+#回収員への報告終わり　route
+@app.route('/report_completed', methods=['POST'])
+def report_completed():
+
+    return render_template('products/report_complete.html')
+ 
 
 if __name__ == "__main__":
 

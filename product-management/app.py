@@ -156,6 +156,38 @@ def report_completed():
 def collection_page():
    return render_template("Collector/collection.html")
  
+ # 回収員：回収完了登録・報告フォーム画面
+
+@app.route("/collection/report-form")
+
+def collection_report_form():
+
+    return render_template("Collector/collection_report.html")
+
+# 回収員：回収完了登録・報告の送信処理
+
+@app.route("/collection/send-report", methods=["POST"])
+
+def collection_send_report():
+
+    current_time = datetime.now().strftime("%Y/%m/%d %H:%M")
+
+    memo = request.form.get("memo", "特記事項なし")
+
+    new_report = {
+
+        "time": current_time,
+
+        "target": "回収員 (Staff)",
+
+        "message": f"回収完了登録: {memo}"
+
+    }
+
+    report_history.insert(0, new_report)
+
+    return render_template("Collector/collection_report_complete.html")
+ 
 
 if __name__ == "__main__":
 
@@ -168,4 +200,3 @@ if __name__ == "__main__":
         debug=True
 
     )
- 

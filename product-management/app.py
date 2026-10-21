@@ -187,6 +187,11 @@ def collection_send_report():
     report_history.insert(0, new_report)
 
     return render_template("Collector/collection_report_complete.html")
+
+# 回収員：検知写真・詳細確認画面
+@app.route("/collection/detail")
+def collection_detail():
+   return render_template("Collector/detail.html")
  
 
 if __name__ == "__main__":

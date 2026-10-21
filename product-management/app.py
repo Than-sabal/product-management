@@ -150,6 +150,11 @@ def report_history_page():
 def report_completed():
 
     return render_template('products/report_complete.html')
+
+#回収員
+@app.route("/collection")
+def collection_page():
+   return render_template("Collector/collection.html")
  
 
 if __name__ == "__main__":

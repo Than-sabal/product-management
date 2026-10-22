@@ -152,11 +152,27 @@ def report_completed():
     return render_template('products/report_complete.html')
 
 #回収員
-@app.route("/collection")
-def collection_page():
-   return render_template("Collector/collection.html")
+@app.route('/collection')
+
+def collection_view():
+    detections = [
+        {
+
+            'id': 1,
+
+            'item_name': 'スプレー缶',
+
+            'location': '第1作業区',
+
+            'detected_at': '2026/10/21 10:15'
+
+        }
+
+    ]
+
+    return render_template('Collector/collection.html', detections=detections)
  
- # 回収員：回収完了登録・報告フォーム画面
+# 回収員：回収完了登録・報告フォーム画面
 
 @app.route("/collection/report-form")
 
@@ -192,7 +208,12 @@ def collection_send_report():
 @app.route("/collection/detail")
 def collection_detail():
    return render_template("Collector/detail.html")
- 
+
+# 回収員：過去の報告履歴画面
+@app.route("/collection/history")
+def collection_history():
+# 回収員が過去に行った報告のリスト
+   return render_template("Collector/collection_history.html", report_list=report_history)
 
 if __name__ == "__main__":
 

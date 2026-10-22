@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}回収員画面{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+<h2 class="mb-4">回収員 メニュー・検知一覧</h2>
+<!-- 未回収の危険物一覧 (検知情報を確認する) -->
+<div class="card shadow-sm mb-4">
+<div class="card-header bg-warning text-dark fw-bold">
+
+            未回収の危険物一覧 (回収対象)
+</div>
+<div class="card-body">
+<div class="list-group">
+
+                {% for item in detections %}
+<div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+<div>
+<h5 class="mb-1">{{ item.item_name }} ({{ item.location }})</h5>
+<small class="text-muted">検知時刻: {{ item.detected_at }}</small>
+</div>
+<div>
+<!-- 写真・詳細を確認するボタン (app.py の collection_detail に合わせる) -->
+<a href="{{ url_for('collection_detail') }}" class="btn btn-sm btn-info text-white me-2">写真・詳細確認</a>
+<!-- 回収完了を報告するボタン (app.py の collection_report_form に合わせる) -->
+<a href="{{ url_for('collection_report_form') }}" class="btn btn-sm btn-success">回収完了を報告する</a>
+</div>
+</div>
+
+                {% else %}
+<div class="list-group-item text-muted text-center py-3">
+
+                    現在、未回収の危険物はありません。
+</div>
+
+                {% endfor %}
+</div>
+</div>
+</div>
+<!-- 画面下部のナビゲーションボタン -->
+<div class="d-flex justify-content-between">
+<a href="{{ url_for('collection_history') }}" class="btn btn-outline-secondary">
+   📋 過去の報告履歴を見る
+</a>
+<a href="{{ url_for('collection_page') }}" class="btn btn-secondary">
+
+            トップページに戻る
+</a>
+</div>
+</div>
+
+{% endblock %}
+ 

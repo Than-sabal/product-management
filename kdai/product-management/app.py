@@ -1,0 +1,425 @@
+import sqlite3
+import os
+from functools import wraps
+from datetime import datetime
+
+from flask import (
+    Flask, render_template, redirect,
+    url_for, request, session, flash
+)
+from werkzeug.security import check_password_hash
+
+app = Flask(__name__)
+
+app.secret_key = os.environ.get(
+    "FLASK_SECRET_KEY",
+    "development-key-change-me"
+)
+
+DATABASE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "users.db"
+)
+
+has_alert = False
+detection_history = []
+
+
+# =========================
+# データベース
+# =========================
+
+def get_db():
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_db():
+    with get_db() as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'staff'
+            )
+        """)
+
+
+init_db()
+
+
+# =========================
+# ログイン・権限チェック
+# =========================
+
+def login_required(view):
+    @wraps(view)
+    def wrapped_view(*args, **kwargs):
+        if "user_id" not in session:
+            flash("ログインしてください。")
+            return redirect(url_for("login"))
+
+        return view(*args, **kwargs)
+
+    return wrapped_view
+
+
+def role_required(*allowed_roles):
+    def decorator(view):
+        @wraps(view)
+        @login_required
+        def wrapped_view(*args, **kwargs):
+            role = session.get("role")
+
+            if role not in allowed_roles:
+                flash("この画面を利用する権限がありません。")
+
+                if role == "tester":
+                    return redirect(url_for("tester_panel"))
+
+                if role == "admin":
+                    return redirect(url_for("products"))
+
+                session.clear()
+                return redirect(url_for("login"))
+
+            return view(*args, **kwargs)
+
+        return wrapped_view
+
+    return decorator
+
+
+# =========================
+# トップページ
+# =========================
+
+@app.route("/")
+def index():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    if session.get("role") == "admin":
+        return redirect(url_for("products"))
+
+    if session.get("role") == "tester":
+        return redirect(url_for("tester_panel"))
+
+    if session["role"] == "collector":
+        return redirect(url_for("collection_page"))
+
+    session.clear()
+    return redirect(url_for("login"))
+
+
+# =========================
+# ログイン
+# =========================
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get(
+            "username", ""
+        ).strip()
+        password = request.form.get("password", "")
+
+        with get_db() as conn:
+            user = conn.execute(
+                """
+                SELECT id, username, password_hash, role
+                FROM users
+                WHERE username = ?
+                """,
+                (username,)
+            ).fetchone()
+
+        if (
+            user
+            and check_password_hash(
+                user["password_hash"], password
+            )
+            and user["role"] in ("admin", "tester","collector")
+        ):
+            session.clear()
+            session["user_id"] = user["id"]
+            session["username"] = user["username"]
+            session["role"] = user["role"]
+
+
+            if user["role"] == "admin":
+                return redirect(url_for("products"))
+
+            elif user["role"] == "tester":
+                return redirect(url_for("tester_panel"))
+
+            elif user["role"] == "collector":
+                return redirect(url_for("collection_page"))
+
+        flash("アカウントまたはパスワードが正しくありません。")
+
+    return render_template("login.html")
+
+
+# =========================
+# ログアウト
+# =========================
+
+@app.route("/logout", methods=["GET", "POST"])
+@login_required
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+# =========================
+# 管理者：モニタリング画面
+# =========================
+
+@app.route("/products")
+@role_required("admin")
+def products():
+    return render_template(
+        "products/index.html",
+        has_alert=has_alert
+    )
+
+
+# =========================
+# 管理者：危険物検知情報
+# =========================
+
+@app.route("/products/alerts")
+@role_required("admin")
+def alerts():
+    return render_template(
+        "products/alerts.html",
+        has_alert=has_alert
+    )
+
+
+# =========================
+# 管理者：検知履歴
+# =========================
+
+@app.route("/products/history")
+@role_required("admin")
+def history():
+    return render_template(
+        "products/history.html",
+        detection_history=detection_history
+    )
+
+
+# =========================
+# 管理者：報告画面
+# =========================
+
+@app.route("/products/report")
+@role_required("admin")
+def report():
+    return render_template("products/report.html")
+
+# =========================
+# 管理者：報告履歴
+# =========================
+
+collection_history_list = []
+# 管理者から回収員へ送信された危険物
+collection_requests = []
+
+# 回収依頼のID
+next_collection_id = 1
+
+
+@app.route("/send-report", methods=["POST"])
+@role_required("admin")
+def send_report():
+    global has_alert, next_collection_id
+
+    current_time = datetime.now().strftime("%Y/%m/%d %H:%M")
+    memo = request.form.get("memo", "").strip()
+
+    if not memo:
+        memo = "特記事項なし"
+
+    # 最新の検知情報を取得
+    latest_detection = (
+        detection_history[0] if detection_history else {}
+    )
+
+    # 回収員への依頼を登録
+    collection_requests.insert(0, {
+        "id": next_collection_id,
+        "item_name": "危険物（要確認）",
+        "location": latest_detection.get(
+            "location", "A地区 ごみ投入口"
+        ),
+        "detected_at": latest_detection.get(
+            "time", current_time
+        ),
+        "memo": memo,
+        "status": "未回収",
+        "reported_at": current_time
+    })
+
+    next_collection_id += 1
+
+    # 管理者の報告履歴も残す
+    report_history.insert(0, {
+        "time": current_time,
+        "target": "回収員",
+        "message": f"危険物回収依頼を送信しました。（メモ：{memo}）"
+    })
+
+    # 現在の警告だけ解除
+    has_alert = False
+
+    flash("報告を送信しました。", "success")
+    return redirect(url_for("products"))
+
+
+@app.route("/products/report-history")
+@role_required("admin")
+def report_history_page():
+    return render_template(
+        "products/report_history.html",
+        report_list=report_history
+    )
+
+
+
+# =========================
+# 管理者：動作確認用の警告発生
+# =========================
+
+@app.route("/trigger-alert", methods=["POST"])
+@role_required("admin")
+def trigger_alert():
+    global has_alert
+    has_alert = True
+    return redirect(url_for("products"))
+
+
+# =========================
+# 管理者：警告解除
+# =========================
+
+@app.route("/reset-alert", methods=["POST"])
+@role_required("admin")
+def reset_alert():
+    global has_alert
+    has_alert = False
+    return redirect(url_for("products"))
+
+
+# =========================
+# テスター専用画面
+# =========================
+@app.route("/tester")
+@role_required("tester")
+def tester_panel():
+    return render_template(
+        "tester.html",
+        has_alert=has_alert
+    )
+
+
+# =========================
+# テスター：検知テスト
+# =========================
+
+@app.route("/trigger-test-alert", methods=["POST"])
+@role_required("tester")
+def trigger_test_alert():
+    global has_alert
+    has_alert = True
+
+    detection_history.insert(0, {
+        "time": datetime.now().strftime("%Y/%m/%d %H:%M"),
+        "location": "A地区 ごみ投入口",
+        "message": "テストによる危険物検知"
+    })
+
+    return redirect(url_for("tester_panel"))
+#回収員への報告終わり　route
+@app.route('/report_completed', methods=['POST'])
+def report_completed():
+
+    return render_template('products/report_complete.html')
+
+#回収員
+@app.route("/collection")
+@role_required("collector")
+def collection_page():
+    # 未回収の危険物だけを表示
+    detections = [
+        item for item in collection_requests
+        if item["status"] == "未回収"
+    ]
+
+    return render_template(
+        "Collector/collection.html",
+        detections=detections
+    )
+# 回収員：回収完了登録・報告フォーム画面
+
+@app.route("/collection/report-form")
+
+def collection_report_form():
+
+    return render_template("Collector/collection_report.html")
+
+# 回収員：回収完了登録・報告の送信処理
+
+@app.route("/collection/send-report", methods=["POST"])
+
+def collection_send_report():
+
+    current_time = datetime.now().strftime("%Y/%m/%d %H:%M")
+
+    memo = request.form.get("memo", "特記事項なし")
+
+    new_report = {
+
+        "time": current_time,
+
+        "target": "回収員 (Staff)",
+
+        "message": f"回収完了登録: {memo}"
+
+    }
+    # 回収員の報告履歴に保存
+    collection_history_list.insert(0, new_report)
+
+    return render_template("Collector/collection_report_complete.html")
+
+# 回収員：検知写真・詳細確認画面
+
+@app.route("/collection/detail")
+def collection_detail():
+    return render_template("Collector/detail.html")
+
+# 回収員：過去の報告履歴画面
+
+@app.route("/collection/history")
+@role_required("collector")
+def collection_history():
+    return render_template(
+        "Collector/collection_history.html",
+        report_list=collection_history_list
+    )
+
+
+# =========================
+# アプリ起動
+# =========================
+
+if __name__ == "__main__":
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        debug=True
+    )

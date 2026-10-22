@@ -156,7 +156,7 @@ def login():
                 return redirect(url_for("tester_panel"))
 
             elif user["role"] == "collector":
-                return redirect(url_for("collector"))
+                return redirect(url_for("collection_page"))
 
         flash("アカウントまたはパスワードが正しくありません。")
 

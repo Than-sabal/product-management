@@ -12,6 +12,10 @@
 <div class="bg-success text-white py-2 px-4 d-flex justify-content-between align-items-center">
 <h4 class="m-0 fw-bold">♻️ ごみ分別ナビ</h4>
 <div>
+  <!-- 管理者画面のメニュー内などに配置 -->
+<a href="{{ url_for('admin_mailbox') }}" class="text-white text-decoration-none fs-5 me-3">
+   ✉
+</a>
 <span class="me-3">山田 太郎 さん (〇〇市)</span>
 <a href="{{ url_for('logout') }}"
    class="btn btn-outline-light btn-sm rounded-pill"

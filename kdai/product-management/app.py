@@ -23,7 +23,7 @@ DATABASE = os.path.join(
 
 has_alert = False
 detection_history = []
-
+report_history = []  # 管理者の報告履歴
 
 # =========================
 # データベース

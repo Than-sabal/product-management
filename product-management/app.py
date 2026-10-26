@@ -215,6 +215,12 @@ def collection_history():
 # 回収員が過去に行った報告のリスト
    return render_template("Collector/collection_history.html", report_list=report_history)
 
+# 管理者：回収員からの報告受信箱 (Mailbox)
+@app.route("/admin/mailbox")
+def admin_mailbox():
+   # 回収員から送られてきたレポート一覧を管理者画面に表示する
+   return render_template("products/admin_mailbox.html", report_list=report_history)
+
 if __name__ == "__main__":
 
     app.run(

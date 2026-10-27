@@ -20,7 +20,7 @@
 </a>
 </div>
 </div>
-<!-- 📝 Form Card အပိုင်း -->
+<!-- Form Card -->
 <div class="card shadow-sm border-0 rounded-4">
 <div class="card-body p-4">
 <form action="{{ url_for('send_report') }}" method="POST">
@@ -34,7 +34,7 @@
 <label class="form-label fw-bold">報告内容 / メモ</label>
 <textarea name="memo" class="form-control" rows="3" placeholder="回収に関する指示やメモを入力してください"></textarea>
 </div>
-<!-- 🔙 戻る & 🚀 送信ボタン -->
+<!-- 戻る &  送信ボタン -->
 <div class="d-flex justify-content-between align-items-center mt-4">
 <a href="{{ url_for('alerts') }}" class="btn btn-outline-secondary rounded-pill px-4">戻る</a>
 <button type="submit" class="btn btn-danger px-4">報告を送信する</button>

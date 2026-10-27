@@ -2,36 +2,45 @@
 
 {% block title %}
 
-回収員へ報告 - ごみ分別ナビ
+報告履歴 - ごみ分別ナビ
 
 {% endblock %}
 
 {% block content %}
 <div class="container mt-4" style="max-width: 600px;">
+<div class="d-flex justify-content-between align-items-center mb-4">
+<div>
 <h2>📤 回収員への報告</h2>
-<p class="text-muted">検知された危険物について回収員へ報告を行います。</p>
-<div class="card shadow-sm border-0 rounded-4 mt-4">
+<p class="text-muted mb-0">検知された危険物について回収員へ報告を行います。</p>
+</div>
+<div>
+<a href="{{ url_for('admin_mailbox') }}" class="btn btn-outline-secondary btn-sm px-3 py-2 shadow-sm">
+
+                ✉ 受信箱
+</a>
+</div>
+</div>
+<!-- 📝 Form Card အပိုင်း -->
+<div class="card shadow-sm border-0 rounded-4">
 <div class="card-body p-4">
 <form action="{{ url_for('send_report') }}" method="POST">
-<!-- 送信先  -->
+<!-- 送信先 -->
 <div class="mb-3">
 <label class="form-label fw-bold">送信先 (回収員・担当者名)</label>
 <input type="text" name="target" class="form-control" placeholder="" value="" required>
 </div>
+<!-- 報告内容 / メモ -->
 <div class="mb-3">
 <label class="form-label fw-bold">報告内容 / メモ</label>
 <textarea name="memo" class="form-control" rows="3" placeholder="回収に関する指示やメモを入力してください"></textarea>
 </div>
+<!-- 🔙 戻る & 🚀 送信ボタン -->
 <div class="d-flex justify-content-between align-items-center mt-4">
 <a href="{{ url_for('alerts') }}" class="btn btn-outline-secondary rounded-pill px-4">戻る</a>
-<form action="{{ url_for('send_report') }}" method="POST">
-<button type="submit" class="btn btn-danger">報告を送信する</button>
-</form>
+<button type="submit" class="btn btn-danger px-4">報告を送信する</button>
 </div>
 </form>
 </div>
 </div>
 </div>
-
-{% endblock %}
- 
+ {% endblock %}

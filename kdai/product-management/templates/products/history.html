@@ -1,0 +1,131 @@
+
+{% extends "base.html" %}
+
+{% block title %}
+検知履歴一覧 | ごみ分別ナビ
+{% endblock %}
+
+{% block content %}
+<style>
+    .history-page {
+        padding: 20px 8px;
+        color: #263238;
+    }
+
+    .history-title {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .history-description {
+        font-size: 1.35rem;
+        color: #6c757d;
+        margin-bottom: 35px;
+    }
+
+    .history-card {
+        background: #ffffff;
+        border-radius: 25px;
+        min-height: 180px;
+        padding: 45px 25px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 3px 7px rgba(0, 0, 0, 0.10);
+        margin-bottom: 35px;
+    }
+
+    .history-empty {
+        font-size: 1.25rem;
+        color: #64748b;
+        text-align: center;
+    }
+
+    .history-table {
+        width: 100%;
+        margin: 0;
+    }
+
+    .history-table th,
+    .history-table td {
+        padding: 14px;
+        vertical-align: middle;
+    }
+
+    .history-back-button {
+        display: inline-block;
+        background: #6c757d;
+        color: #ffffff;
+        text-decoration: none;
+        font-size: 1.25rem;
+        padding: 13px 42px;
+        border-radius: 50px;
+        transition: background 0.2s;
+    }
+
+    .history-back-button:hover {
+        background: #565e64;
+        color: #ffffff;
+    }
+</style>
+
+<div class="history-page">
+
+    <h2 class="history-title">
+        📋 検知履歴一覧
+    </h2>
+
+    <p class="history-description">
+        過去に検知された危険物情報の履歴です。
+    </p>
+
+    <div class="history-card">
+        {% if detection_history %}
+        <div class="table-responsive w-100">
+            <table class="table table-striped history-table">
+                <thead>
+                    <tr>
+                        <th>日時</th>
+                        <th>種別</th>
+                        <th>場所</th>
+                        <th>状態</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in detection_history %}
+                    <tr>
+                        <td>{{ item.time }}</td>
+                        <td>{{ item.type|default('金属・危険物') }}</td>
+                        <td>{{ item.location }}</td>
+                        <td>{{ item.status|default('未処理') }}</td>
+                        <td>
+                            <form method="POST"
+                                  action="{{ url_for('delete_detection_history', record_id=item.id) }}"
+                                  onsubmit="return confirm('この検知履歴を削除しますか？');">
+                                <button type="submit"
+                                        class="btn btn-danger btn-sm">
+                                    削除
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="history-empty mb-0">
+            現在、検知履歴はありません。
+        </p>
+        {% endif %}
+    </div>
+
+    <a href="{{ url_for('products') }}"
+       class="history-back-button">
+        トップへ戻る
+    </a>
+
+</div>
+{% endblock %}

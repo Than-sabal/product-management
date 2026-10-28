@@ -45,7 +45,7 @@ def get_db():
 def init_db():
     with get_db() as conn:
 
-           # iPhoneの向き情報テーブル
+        # iPhoneの向き情報テーブル
         conn.execute("""
             CREATE TABLE IF NOT EXISTS orientation_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -244,7 +244,9 @@ def receive_detection():
         "detected_at": current_time
     }, 201
 
-
+@app.route("/orientation-test")
+def orientation_test():
+    return render_template("orientation_test.html")
 @app.route("/api/orientation", methods=["POST"])
 def receive_orientation():
     # JSONデータを受信

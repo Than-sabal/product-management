@@ -23,6 +23,7 @@
 
         let listening = false;
 
+        // 画面にセンサー値を表示
         function showValue(id, value) {
             document.getElementById(id).textContent =
                 value == null ? "取得不可" :
@@ -30,6 +31,7 @@
                 "取得不可";
         }
 
+        // センサー情報を受信する
         function handleOrientation(event) {
             showValue("alpha", event.alpha);
             showValue("beta", event.beta);
@@ -41,7 +43,7 @@
             if (Number.isFinite(heading)) {
                 showValue("heading", heading);
             } else if (Number.isFinite(event.alpha)) {
-                // alphaは端末の向きを示す値で、コンパス方位とは別物
+                // alphaはコンパス方位とは別の値
                 document.getElementById("heading").textContent =
                     "未対応";
             } else {
@@ -49,6 +51,7 @@
                     "取得不可";
             }
 
+            // センサー値の取得状況を表示
             if (
                 event.alpha == null &&
                 event.beta == null &&
@@ -60,17 +63,61 @@
                 status.textContent =
                     "センサー値を取得しました";
             }
+
+            // Flask APIへ向き情報を1秒に1回送信
+            const now = Date.now();
+
+            if (
+                !handleOrientation.lastSent ||
+                now - handleOrientation.lastSent >= 1000
+            ) {
+                handleOrientation.lastSent = now;
+
+                fetch("/api/orientation", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        alpha: event.alpha,
+                        beta: event.beta,
+                        gamma: event.gamma,
+                        heading: Number.isFinite(heading)
+                            ? heading
+                            : null
+                    })
+                })
+                .then(async response => {
+                    const result = await response.json();
+
+                    if (!response.ok || !result.success) {
+                        throw new Error(
+                            result.message || "送信に失敗しました"
+                        );
+                    }
+
+                    status.textContent =
+                        "センサー取得・データベース保存成功";
+                })
+                .catch(error => {
+                    status.textContent =
+                        "送信エラー：" + error.message;
+                });
+            }
         }
 
+        // センサー開始ボタン
         startButton.addEventListener("click", async () => {
             if (listening) return;
 
+            // HTTPS接続を確認
             if (!window.isSecureContext) {
                 status.textContent =
                     "HTTPS接続が必要です。";
                 return;
             }
 
+            // センサー対応状況を確認
             if (!("DeviceOrientationEvent" in window)) {
                 status.textContent =
                     "このブラウザーは方位センサーに対応していません。";
@@ -78,6 +125,7 @@
             }
 
             try {
+                // iPhone Safariでは許可が必要な場合がある
                 if (
                     typeof DeviceOrientationEvent.requestPermission
                     === "function"
@@ -92,6 +140,7 @@
                     }
                 }
 
+                // センサー情報の受信を開始
                 window.addEventListener(
                     "deviceorientation",
                     handleOrientation
@@ -99,8 +148,10 @@
 
                 listening = true;
                 startButton.disabled = true;
+
                 status.textContent =
                     "センサーのデータを待っています。";
+
             } catch (error) {
                 status.textContent =
                     "エラー：" + error.message;

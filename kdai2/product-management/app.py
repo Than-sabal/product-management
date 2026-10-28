@@ -244,9 +244,96 @@ def receive_detection():
         "detected_at": current_time
     }, 201
 
-@app.route("/orientation-test")
-def orientation_test():
-    return render_template("orientation_test.html")
+
+@app.route("/api/orientation", methods=["POST"])
+def receive_orientation():
+    # JSONデータを受信
+    if not request.is_json:
+        return {
+            "success": False,
+            "message": "JSON形式で送信してください"
+        }, 415
+
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return {
+            "success": False,
+            "message": "JSONデータが不正です"
+        }, 400
+
+    # iPhoneの向き情報を取得
+    values = {}
+
+    for key in ("alpha", "beta", "gamma", "heading"):
+        value = data.get(key)
+
+        if value is None:
+            values[key] = None
+            continue
+
+        try:
+            value = float(value)
+        except (TypeError, ValueError):
+            return {
+                "success": False,
+                "message": f"{key}の値が不正です"
+            }, 400
+
+        if not math.isfinite(value):
+            return {
+                "success": False,
+                "message": f"{key}の値が不正です"
+            }, 400
+
+        values[key] = value
+
+    # 少なくとも1つの向き情報が必要
+    if all(values[key] is None for key in values):
+        return {
+            "success": False,
+            "message": "向きの情報がありません"
+        }, 400
+
+    received_at = datetime.now(
+        ZoneInfo("Asia/Tokyo")
+    ).strftime("%Y/%m/%d %H:%M:%S")
+
+    # 磁場検知履歴とは別に保存
+    try:
+        with get_db() as conn:
+            cursor = conn.execute(
+                """
+                INSERT INTO orientation_history (
+                    received_at, alpha, beta, gamma, heading
+                )
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    received_at,
+                    values["alpha"],
+                    values["beta"],
+                    values["gamma"],
+                    values["heading"]
+                )
+            )
+
+            record_id = cursor.lastrowid
+
+    except sqlite3.Error:
+        app.logger.exception("向き情報の保存に失敗しました")
+        return {
+            "success": False,
+            "message": "向き情報を保存できませんでした"
+        }, 500
+
+    return {
+        "success": True,
+        "message": "向き情報を保存しました",
+        "id": record_id,
+        "received_at": received_at
+    }, 201
+
 
 
 # =========================

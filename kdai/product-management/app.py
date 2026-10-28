@@ -2,6 +2,7 @@ import sqlite3
 import os
 from functools import wraps
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from flask import (
     Flask, render_template, redirect,
@@ -291,7 +292,7 @@ next_collection_id = 1
 def send_report():
     global has_alert, next_collection_id
 
-    current_time = datetime.now().strftime("%Y/%m/%d %H:%M")
+    current_time = datetime.now(ZoneInfo("Asia/Tokyo")).strftime("%Y/%m/%d %H:%M:%S")
     memo = request.form.get("memo", "").strip()
 
     if not memo:
@@ -405,9 +406,7 @@ def tester_panel():
 def trigger_test_alert():
     global has_alert
 
-    current_time = datetime.now().strftime(
-        "%Y/%m/%d %H:%M:%S"
-    )
+    current_time = datetime.now(ZoneInfo("Asia/Tokyo")).strftime("%Y/%m/%d %H:%M:%S")
 
     item_name = "危険物（テスト検知）"
     location = "A地区 ごみ投入口"
@@ -501,7 +500,7 @@ def collection_report_form():
 @app.route("/collection/send-report", methods=["POST"])
 @role_required("collector")
 def collection_send_report():
-    current_time = datetime.now().strftime("%Y/%m/%d %H:%M")
+    current_time = datetime.now(ZoneInfo("Asia/Tokyo")).strftime("%Y/%m/%d %H:%M:%S")
     request_id = request.form.get("request_id", type=int)
     memo = request.form.get("memo", "").strip()
 
@@ -659,4 +658,5 @@ if __name__ == "__main__":
         port=5000,
         debug=True
     )
+
 

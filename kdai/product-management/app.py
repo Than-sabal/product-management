@@ -83,6 +83,31 @@ def init_db():
                 message TEXT NOT NULL
             )
         """)
+                # 既存の回収員報告履歴をメールとして管理する
+        columns = {
+            row["name"]
+            for row in conn.execute(
+                "PRAGMA table_info(collection_history)"
+            ).fetchall()
+        }
+
+        if "sender" not in columns:
+            conn.execute("""
+                ALTER TABLE collection_history
+                ADD COLUMN sender TEXT NOT NULL DEFAULT '回収員'
+            """)
+
+        if "is_read" not in columns:
+            conn.execute("""
+                ALTER TABLE collection_history
+                ADD COLUMN is_read INTEGER NOT NULL DEFAULT 0
+            """)
+
+        if "is_deleted" not in columns:
+            conn.execute("""
+                ALTER TABLE collection_history
+                ADD COLUMN is_deleted INTEGER NOT NULL DEFAULT 0
+            """)
 
 
 # アプリ起動時にデータベースを初期化
@@ -533,9 +558,21 @@ def collection_send_report():
 
     with get_db() as conn:
         conn.execute("""
-            INSERT INTO collection_history (reported_at, target, message)
-            VALUES (?, ?, ?)
-        """, (current_time, "管理者", message))
+            INSERT INTO collection_history (
+                reported_at,
+                target,
+                message,
+                sender,
+                is_read,
+                is_deleted
+            )
+            VALUES (?, ?, ?, ?, 0, 0)
+        """, (
+            current_time,
+            "管理者",
+            message,
+            session.get("username", "回収員")
+        ))
     flash("回収完了を登録し、管理者へ報告しました。", "success")
 
     return redirect(url_for("collection_page"))
@@ -608,10 +645,147 @@ def delete_collection_history(record_id):
 
 
 # 管理者：回収員からの報告受信箱 (Mailbox)
+# =========================
+# 管理者：Outlook風メール受信箱
+# =========================
+
 @app.route("/admin/mailbox")
+@role_required("admin")
 def admin_mailbox():
-    # 回収員から送られてきたレポート一覧を管理者画面に表示する
-    return render_template("products/admin_mailbox.html", report_list=report_history)
+    folder = request.args.get("folder", "inbox")
+    q = request.args.get("q", "").strip()
+    selected_id = request.args.get("selected", type=int)
+
+    allowed_folders = {
+        "inbox", "unread", "all", "deleted"
+    }
+
+    if folder not in allowed_folders:
+        folder = "inbox"
+
+    # 選択したメールを開いたら既読にする
+    if selected_id is not None and folder != "deleted":
+        with get_db() as conn:
+            conn.execute("""
+                UPDATE collection_history
+                SET is_read = 1
+                WHERE id = ? AND is_deleted = 0
+            """, (selected_id,))
+
+    conditions = []
+    params = []
+
+    if folder == "deleted":
+        conditions.append("is_deleted = 1")
+    else:
+        conditions.append("is_deleted = 0")
+
+        if folder == "unread":
+            # 選択中のメールは、開いた後も本文を表示できる
+            conditions.append(
+                "(is_read = 0 OR id = ?)"
+            )
+            params.append(selected_id or -1)
+
+    if q:
+        conditions.append("""
+            (
+                sender LIKE ?
+                OR target LIKE ?
+                OR message LIKE ?
+                OR reported_at LIKE ?
+            )
+        """)
+        keyword = f"%{q}%"
+        params.extend([keyword] * 4)
+
+    where_sql = " AND ".join(conditions)
+
+    with get_db() as conn:
+        messages = conn.execute(f"""
+            SELECT
+                id,
+                reported_at AS time,
+                sender,
+                target,
+                message,
+                is_read,
+                is_deleted
+            FROM collection_history
+            WHERE {where_sql}
+            ORDER BY id DESC
+        """, params).fetchall()
+
+        unread_count = conn.execute("""
+            SELECT COUNT(*)
+            FROM collection_history
+            WHERE is_read = 0 AND is_deleted = 0
+        """).fetchone()[0]
+
+        selected_message = None
+
+        if selected_id is not None:
+            selected_message = conn.execute("""
+                SELECT
+                    id,
+                    reported_at AS time,
+                    sender,
+                    target,
+                    message,
+                    is_read,
+                    is_deleted
+                FROM collection_history
+                WHERE id = ?
+            """, (selected_id,)).fetchone()
+
+    # 削除済みメールは復元できるようにする
+    if selected_message and selected_message["is_deleted"]:
+        folder = "deleted"
+
+    return render_template(
+        "products/admin_mailbox.html",
+        messages=messages,
+        selected_message=selected_message,
+        unread_count=unread_count,
+        folder=folder,
+        q=q
+    )
+
+
+# メールを削除済みフォルダへ移動
+@app.route(
+    "/admin/mailbox/delete/<int:message_id>",
+    methods=["POST"]
+)
+@role_required("admin")
+def admin_mailbox_delete(message_id):
+    with get_db() as conn:
+        conn.execute("""
+            UPDATE collection_history
+            SET is_deleted = 1
+            WHERE id = ?
+        """, (message_id,))
+
+    flash("メールを削除済みフォルダへ移動しました。", "success")
+    return redirect(url_for("admin_mailbox", folder="inbox"))
+
+
+# 削除済みメールを復元
+@app.route(
+    "/admin/mailbox/restore/<int:message_id>",
+    methods=["POST"]
+)
+@role_required("admin")
+def admin_mailbox_restore(message_id):
+    with get_db() as conn:
+        conn.execute("""
+            UPDATE collection_history
+            SET is_deleted = 0
+            WHERE id = ?
+        """, (message_id,))
+
+    flash("メールを受信トレイに復元しました。", "success")
+    return redirect(url_for("admin_mailbox", folder="inbox"))
 
 
 # 検知情報履歴：ステータス更新
@@ -658,5 +832,4 @@ if __name__ == "__main__":
         port=5000,
         debug=True
     )
-
 

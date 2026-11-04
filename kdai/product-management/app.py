@@ -73,6 +73,19 @@ def init_db():
                 message TEXT NOT NULL
             )
         """)
+        # 回収員専用メールボックス
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS collector_mailbox (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                recipient_id INTEGER NOT NULL,
+                sender TEXT NOT NULL,
+                subject TEXT NOT NULL,
+                message TEXT NOT NULL,
+                reported_at TEXT NOT NULL,
+                is_read INTEGER NOT NULL DEFAULT 0,
+                is_deleted INTEGER NOT NULL DEFAULT 0
+            )
+        """)
 
         # 回収員の報告履歴テーブル
         conn.execute("""
@@ -356,7 +369,35 @@ def send_report():
             "回収員",
             f"危険物回収依頼を送信しました。（メモ：{memo}）"
         ))
+    # 回収員全員の受信箱にメールを送信
+    with get_db() as conn:
+        collectors = conn.execute("""
+            SELECT id, username
+            FROM users
+            WHERE role = 'collector'
+        """).fetchall()
 
+        for collector in collectors:
+            conn.execute("""
+                INSERT INTO collector_mailbox (
+                    recipient_id,
+                    sender,
+                    subject,
+                    message,
+                    reported_at,
+                    is_read,
+                    is_deleted
+                )
+                VALUES (?, ?, ?, ?, ?, 0, 0)
+            """, (
+                collector["id"],
+                session.get("username", "管理者"),
+                "危険物回収依頼",
+                f"危険物回収依頼\n"
+                f"回収場所：{latest_detection.get('location', 'A地区 ごみ投入口')}\n"
+                f"依頼内容：{memo}",
+                current_time
+            ))
     # 現在の警告だけ解除
     has_alert = False
 
@@ -464,16 +505,147 @@ def trigger_test_alert():
 @app.route("/collection/mailbox")
 @role_required("collector")
 def collection_mailbox():
+
+    folder = request.args.get("folder", "inbox")
+    q = request.args.get("q", "").strip()
+    selected_id = request.args.get("selected", type=int)
+
+    allowed_folders = {"inbox", "unread", "all", "deleted"}
+
+    if folder not in allowed_folders:
+        folder = "inbox"
+
+    user_id = session["user_id"]
+
     with get_db() as conn:
-        messages = conn.execute("""
-            SELECT id, reported_at AS time, target, message
-            FROM report_history
+
+        # メールを開いたら既読にする
+        if selected_id is not None and folder != "deleted":
+            conn.execute("""
+                UPDATE collector_mailbox
+                SET is_read = 1
+                WHERE id = ?
+                  AND recipient_id = ?
+                  AND is_deleted = 0
+            """, (selected_id, user_id))
+
+        conditions = ["recipient_id = ?"]
+        params = [user_id]
+
+        if folder == "deleted":
+            conditions.append("is_deleted = 1")
+        else:
+            conditions.append("is_deleted = 0")
+
+            if folder == "unread":
+                conditions.append("(is_read = 0 OR id = ?)")
+                params.append(selected_id or -1)
+
+        if q:
+            conditions.append("""
+                (
+                    sender LIKE ?
+                    OR subject LIKE ?
+                    OR message LIKE ?
+                    OR reported_at LIKE ?
+                )
+            """)
+
+            keyword = f"%{q}%"
+            params.extend([keyword] * 4)
+
+        where_sql = " AND ".join(conditions)
+
+        # メール一覧
+        messages = conn.execute(f"""
+            SELECT
+                id,
+                recipient_id,
+                sender,
+                subject,
+                message,
+                reported_at AS time,
+                is_read,
+                is_deleted
+            FROM collector_mailbox
+            WHERE {where_sql}
             ORDER BY id DESC
-        """).fetchall()
+        """, params).fetchall()
+
+        # 未読件数
+        unread_count = conn.execute("""
+            SELECT COUNT(*)
+            FROM collector_mailbox
+            WHERE recipient_id = ?
+              AND is_read = 0
+              AND is_deleted = 0
+        """, (user_id,)).fetchone()[0]
+
+        # 選択したメール
+        selected_message = None
+
+        if selected_id is not None:
+            selected_message = conn.execute("""
+                SELECT *
+                FROM collector_mailbox
+                WHERE id = ?
+                  AND recipient_id = ?
+            """, (selected_id, user_id)).fetchone()
+
+    if selected_message and selected_message["is_deleted"]:
+        folder = "deleted"
 
     return render_template(
         "Collector/collection_mailbox.html",
-        messages=messages
+        messages=messages,
+        selected_message=selected_message,
+        unread_count=unread_count,
+        folder=folder,
+        q=q
+    )
+
+
+# 回収員：メール削除
+@app.route(
+    "/collection/mailbox/delete/<int:message_id>",
+    methods=["POST"]
+)
+@role_required("collector")
+def collection_mailbox_delete(message_id):
+
+    with get_db() as conn:
+        conn.execute("""
+            UPDATE collector_mailbox
+            SET is_deleted = 1
+            WHERE id = ?
+              AND recipient_id = ?
+        """, (message_id, session["user_id"]))
+
+    flash("メールを削除済みに移動しました。", "success")
+
+    return redirect(url_for("collection_mailbox"))
+
+
+# 回収員：メール復元
+@app.route(
+    "/collection/mailbox/restore/<int:message_id>",
+    methods=["POST"]
+)
+@role_required("collector")
+def collection_mailbox_restore(message_id):
+
+    with get_db() as conn:
+        conn.execute("""
+            UPDATE collector_mailbox
+            SET is_deleted = 0
+            WHERE id = ?
+              AND recipient_id = ?
+        """, (message_id, session["user_id"]))
+
+    flash("メールを復元しました。", "success")
+
+    return redirect(
+        url_for("collection_mailbox", folder="inbox")
     )
 
 #回収員への報告終わり　route

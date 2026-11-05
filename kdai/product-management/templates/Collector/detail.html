@@ -24,8 +24,10 @@
 
                     戻る
 </a>
-<a href="{{ url_for('collection_report_form') }}" class="btn btn-success rounded-pill px-4">
-
+<a href="{{ url_for(
+    'collection_report_form',
+    request_id=item.id
+) }}" class="btn btn-success rounded-pill px-4">
                     回収完了報告へ進む ➔
 </a>
 </div>

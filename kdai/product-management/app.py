@@ -86,7 +86,20 @@ def init_db():
                 is_deleted INTEGER NOT NULL DEFAULT 0
             )
         """)
-
+                # 回収依頼テーブル
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS collection_requests (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                detection_id INTEGER,
+                item_name TEXT NOT NULL,
+                location TEXT NOT NULL,
+                detected_at TEXT NOT NULL,
+                memo TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT '未回収',
+                reported_at TEXT NOT NULL,
+                completed_at TEXT
+            )
+        """)
         # 回収員の報告履歴テーブル
         conn.execute("""
             CREATE TABLE IF NOT EXISTS collection_history (
@@ -317,27 +330,23 @@ def report():
 # 管理者：報告履歴
 # =========================
 
-collection_history_list = []
-# 管理者から回収員へ送信された危険物
-collection_requests = []
-
-# 回収依頼のID
-next_collection_id = 1
-
-
 @app.route("/send-report", methods=["POST"])
 @role_required("admin")
 def send_report():
-    global has_alert, next_collection_id
+    global has_alert
 
-    current_time = datetime.now(ZoneInfo("Asia/Tokyo")).strftime("%Y/%m/%d %H:%M:%S")
+    current_time = datetime.now(
+        ZoneInfo("Asia/Tokyo")
+    ).strftime("%Y/%m/%d %H:%M:%S")
+
     memo = request.form.get("memo", "").strip()
 
     if not memo:
         memo = "特記事項なし"
 
-    # 最新の検知情報をDBから取得
     with get_db() as conn:
+
+        # 最新の検知情報を取得
         row = conn.execute("""
             SELECT id, item_name, location, detected_at
             FROM detection_history
@@ -345,40 +354,48 @@ def send_report():
             LIMIT 1
         """).fetchone()
 
-    latest_detection = dict(row) if row else {}
-    # 回収員への依頼を登録
-    collection_requests.insert(0, {
-        "id": next_collection_id,
-        "detection_id": latest_detection.get("id"),
-        "item_name": latest_detection.get(
-            "item_name", "危険物（要確認）"
-        ),
-        "location": latest_detection.get(
-            "location", "A地区 ごみ投入口"
-        ),
-        "detected_at": latest_detection.get(
-            "detected_at", current_time
-        ),
-        "memo": memo,
-        "status": "未回収",
-        "reported_at": current_time
-    })
+        latest_detection = dict(row) if row else {}
 
-    next_collection_id += 1
+        # 回収依頼をSQLiteに保存
+        cursor = conn.execute("""
+            INSERT INTO collection_requests (
+                detection_id,
+                item_name,
+                location,
+                detected_at,
+                memo,
+                status,
+                reported_at
+            )
+            VALUES (?, ?, ?, ?, ?, '未回収', ?)
+        """, (
+            latest_detection.get("id"),
+            latest_detection.get(
+                "item_name", "危険物（要確認）"
+            ),
+            latest_detection.get(
+                "location", "A地区 ごみ投入口"
+            ),
+            latest_detection.get(
+                "detected_at", current_time
+            ),
+            memo,
+            current_time
+        ))
 
-    # 管理者の報告履歴も残す
-
-    with get_db() as conn:
+        # 管理者の報告履歴
         conn.execute("""
-            INSERT INTO report_history (reported_at, target, message)
+            INSERT INTO report_history (
+                reported_at, target, message
+            )
             VALUES (?, ?, ?)
         """, (
             current_time,
             "回収員",
             f"危険物回収依頼を送信しました。（メモ：{memo}）"
         ))
-    # 回収員全員の受信箱にメールを送信
-    with get_db() as conn:
+
+        # 回収員全員にメール送信
         collectors = conn.execute("""
             SELECT id, username
             FROM users
@@ -406,13 +423,12 @@ def send_report():
                 f"依頼内容：{memo}",
                 current_time
             ))
-    # 現在の警告だけ解除
+
     has_alert = False
 
     flash("報告を送信しました。", "success")
+
     return redirect(url_for("products"))
-
-
 
 @app.route("/products/report-history")
 @role_required("admin")
@@ -666,11 +682,14 @@ def report_completed():
 @app.route("/collection")
 @role_required("collector")
 def collection_page():
-    # 未回収の危険物だけを表示
-    detections = [
-        item for item in collection_requests
-        if item["status"] == "未回収"
-    ]
+
+    with get_db() as conn:
+        detections = conn.execute("""
+            SELECT *
+            FROM collection_requests
+            WHERE status = '未回収'
+            ORDER BY id DESC
+        """).fetchall()
 
     return render_template(
         "Collector/collection.html",
@@ -681,16 +700,18 @@ def collection_page():
 @app.route("/collection/report-form")
 @role_required("collector")
 def collection_report_form():
-    request_id = request.args.get("request_id", type=int)
 
-    item = next(
-        (
-            item for item in collection_requests
-            if item["id"] == request_id
-            and item["status"] == "未回収"
-        ),
-        None
+    request_id = request.args.get(
+        "request_id", type=int
     )
+
+    with get_db() as conn:
+        item = conn.execute("""
+            SELECT *
+            FROM collection_requests
+            WHERE id = ?
+              AND status = '未回収'
+        """, (request_id,)).fetchone()
 
     if item is None:
         flash("対象の回収依頼が見つかりません。", "warning")
@@ -710,36 +731,35 @@ def collection_send_report():
         ZoneInfo("Asia/Tokyo")
     ).strftime("%Y/%m/%d %H:%M:%S")
 
-    request_id = request.form.get("request_id", type=int)
+    request_id = request.form.get(
+        "request_id", type=int
+    )
+
     memo = request.form.get("memo", "").strip()
 
     if not memo:
         memo = "特記事項なし"
 
-    # 管理者から届いた未回収の依頼を探す
-    completed_item = next(
-        (
-            item for item in collection_requests
-            if item["id"] == request_id
-            and item["status"] == "未回収"
-        ),
-        None
-    )
-
-    if completed_item is None:
-        flash("対象の回収依頼が見つかりません。", "warning")
-        return redirect(url_for("collection_page"))
-
-    # 報告内容
-    message = (
-        f"{completed_item['item_name']} の回収完了"
-        f"（場所：{completed_item['location']}、メモ：{memo}）"
-    )
-
-    # DBに保存
     with get_db() as conn:
 
-        # 回収員からの報告履歴を保存
+        completed_item = conn.execute("""
+            SELECT *
+            FROM collection_requests
+            WHERE id = ?
+              AND status = '未回収'
+        """, (request_id,)).fetchone()
+
+        if completed_item is None:
+            flash("対象の回収依頼が見つかりません。", "warning")
+            return redirect(url_for("collection_page"))
+
+        message = (
+            f"{completed_item['item_name']} の回収完了"
+            f"（場所：{completed_item['location']}、"
+            f"メモ：{memo}）"
+        )
+
+        # 回収履歴を保存
         conn.execute("""
             INSERT INTO collection_history (
                 reported_at,
@@ -757,8 +777,16 @@ def collection_send_report():
             session.get("username", "回収員")
         ))
 
-        # 関連する検知履歴を自動的に対応済みに変更
-        detection_id = completed_item.get("detection_id")
+        # 回収依頼を回収済みに変更
+        conn.execute("""
+            UPDATE collection_requests
+            SET status = '回収済み',
+                completed_at = ?
+            WHERE id = ?
+        """, (current_time, request_id))
+
+        # 検知履歴を対応済みに変更
+        detection_id = completed_item["detection_id"]
 
         if detection_id is not None:
             conn.execute("""
@@ -767,10 +795,6 @@ def collection_send_report():
                 WHERE id = ?
             """, (detection_id,))
 
-    # 回収依頼の状態を変更
-    completed_item["status"] = "回収済み"
-    completed_item["completed_at"] = current_time
-
     flash(
         "回収完了を登録しました。検知履歴も対応済みに更新しました。",
         "success"
@@ -778,13 +802,31 @@ def collection_send_report():
 
     return redirect(url_for("collection_page"))
 
-
 # 回収員：検知写真・詳細確認画面
 
 @app.route("/collection/detail")
+@role_required("collector")
 def collection_detail():
-    return render_template("Collector/detail.html")
 
+    request_id = request.args.get(
+        "request_id", type=int
+    )
+
+    with get_db() as conn:
+        item = conn.execute("""
+            SELECT *
+            FROM collection_requests
+            WHERE id = ?
+        """, (request_id,)).fetchone()
+
+    if item is None:
+        flash("対象の回収依頼が見つかりません。", "warning")
+        return redirect(url_for("collection_page"))
+
+    return render_template(
+        "Collector/detail.html",
+        item=item
+    )
 # 回収員：過去の報告履歴画面
 
 @app.route("/collection/history")

@@ -31,16 +31,28 @@
                         </small>
                     </div>
 
-                    <div>
+                    <div class="d-flex flex-column align-items-center gap-2"
+                        style="min-width: 210px;">
+
+                        <!-- 詳細ボタン -->
                         <a href="{{ url_for('collection_detail', request_id=item.id) }}"
-                           class="btn btn-sm btn-info text-white me-2">
-                            写真・詳細確認
+                        class="btn btn-outline-primary rounded-pill"
+                        style="width: 180px; font-size: 20px; padding: 10px;">
+                            詳細を見る
                         </a>
 
-                        <a href="{{ url_for('collection_report_form', request_id=item.id) }}"
-                           class="btn btn-sm btn-success">
-                            回収完了を報告する
-                        </a>
+                        <!-- 回収完了ボタン -->
+                        <form action="{{ url_for('collection_send_report') }}"
+                            method="POST">
+                            <input type="hidden" name="request_id" value="{{ item.id }}">
+
+                            <button type="submit"
+                                    class="btn btn-success"
+                                    style="font-size: 18px;">
+                                回収完了を報告する
+                            </button>
+                        </form>
+
                     </div>
                 </div>
                 {% else %}
@@ -59,10 +71,6 @@
             📋 過去の報告履歴を見る
         </a>
 
-        <a href="{{ url_for('collection_page') }}"
-           class="btn btn-secondary">
-            トップページに戻る
-        </a>
     </div>
 </div>
 {% endblock %}

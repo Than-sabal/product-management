@@ -336,20 +336,28 @@ def send_report():
     if not memo:
         memo = "特記事項なし"
 
-    # 最新の検知情報を取得
-    latest_detection = (
-        detection_history[0] if detection_history else {}
-    )
+    # 最新の検知情報をDBから取得
+    with get_db() as conn:
+        row = conn.execute("""
+            SELECT id, item_name, location, detected_at
+            FROM detection_history
+            ORDER BY id DESC
+            LIMIT 1
+        """).fetchone()
 
+    latest_detection = dict(row) if row else {}
     # 回収員への依頼を登録
     collection_requests.insert(0, {
         "id": next_collection_id,
-        "item_name": "危険物（要確認）",
+        "detection_id": latest_detection.get("id"),
+        "item_name": latest_detection.get(
+            "item_name", "危険物（要確認）"
+        ),
         "location": latest_detection.get(
             "location", "A地区 ごみ投入口"
         ),
         "detected_at": latest_detection.get(
-            "time", current_time
+            "detected_at", current_time
         ),
         "memo": memo,
         "status": "未回収",
@@ -697,7 +705,11 @@ def collection_report_form():
 @app.route("/collection/send-report", methods=["POST"])
 @role_required("collector")
 def collection_send_report():
-    current_time = datetime.now(ZoneInfo("Asia/Tokyo")).strftime("%Y/%m/%d %H:%M:%S")
+
+    current_time = datetime.now(
+        ZoneInfo("Asia/Tokyo")
+    ).strftime("%Y/%m/%d %H:%M:%S")
+
     request_id = request.form.get("request_id", type=int)
     memo = request.form.get("memo", "").strip()
 
@@ -718,17 +730,16 @@ def collection_send_report():
         flash("対象の回収依頼が見つかりません。", "warning")
         return redirect(url_for("collection_page"))
 
-    # 回収完了を登録
-    completed_item["status"] = "回収済み"
-    completed_item["completed_at"] = current_time
-
-    # 回収員の報告履歴に保存
+    # 報告内容
     message = (
         f"{completed_item['item_name']} の回収完了"
         f"（場所：{completed_item['location']}、メモ：{memo}）"
     )
 
+    # DBに保存
     with get_db() as conn:
+
+        # 回収員からの報告履歴を保存
         conn.execute("""
             INSERT INTO collection_history (
                 reported_at,
@@ -745,9 +756,28 @@ def collection_send_report():
             message,
             session.get("username", "回収員")
         ))
-    flash("回収完了を登録し、管理者へ報告しました。", "success")
+
+        # 関連する検知履歴を自動的に対応済みに変更
+        detection_id = completed_item.get("detection_id")
+
+        if detection_id is not None:
+            conn.execute("""
+                UPDATE detection_history
+                SET status = '対応済み'
+                WHERE id = ?
+            """, (detection_id,))
+
+    # 回収依頼の状態を変更
+    completed_item["status"] = "回収済み"
+    completed_item["completed_at"] = current_time
+
+    flash(
+        "回収完了を登録しました。検知履歴も対応済みに更新しました。",
+        "success"
+    )
 
     return redirect(url_for("collection_page"))
+
 
 # 回収員：検知写真・詳細確認画面
 

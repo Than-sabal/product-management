@@ -1,0 +1,58 @@
+
+<!DOCTYPE html><html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ログアウト確認</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding: 80px 20px;
+            background: #f5f7fa;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #ddd;
+        }
+        button, a {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+        }
+        .logout {
+            background: #dc3545;
+            color: white;
+        }
+        .cancel {
+            background: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>ログアウト確認</h2>
+        <p>ログアウトしてもよろしいですか？</p>
+
+        <form action="{{ url_for('logout') }}" method="POST">
+            <button type="submit" class="logout">
+                ログアウト
+            </button>
+        </form>
+
+        <a href="{{ url_for('products') }}" class="cancel">
+            キャンセル
+        </a>
+    </div>
+</body>
+</html>

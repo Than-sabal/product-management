@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}
+危険物検知情報 - ごみ分別ナビ
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <h2>
+        {% if has_alert %}
+        🚨 危険物検知情報（要確認）
+        {% else %}
+        🟢 危険物検知情報（正常）
+        {% endif %}
+    </h2>
+
+    <p>
+        {% if has_alert %}
+        ごみ投入口において、センサーが危険物の反応を検知しました。内容を確認し、回収員へ報告してください。
+        {% else %}
+        ごみ投入口において、異常は検知されていません。
+        {% endif %}
+    </p>
+
+    {% if has_alert %}
+
+    <!-- 1. 撮影された画像・動画 -->
+    <div class="card my-3">
+        <div class="card-header">
+            📷 人物の撮影（動画・写真）
+        </div>
+
+        <div class="card-body text-center">
+            {% if data and data.image_url %}
+            <img
+                src="{{ data.image_url }}"
+                alt="検知画像"
+                style="max-width: 100%; height: auto; border-radius: 8px;"
+            >
+            {% else %}
+            <p class="text-muted">
+                撮影された画像・動画がここに表示されます
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 2. 検知情報・通知管理 -->
+    <div class="card my-3">
+        <div class="card-header">
+            ℹ️ 検知情報・通知管理
+        </div>
+
+        <div class="card-body">
+            <p>
+                <strong>ステータス:</strong>
+                <span class="badge bg-danger">
+                    {{ data.status if data and data.status else '金属検知（異常あり）' }}
+                </span>
+            </p>
+
+            <p>
+                <strong>検知日時:</strong>
+                <span>
+                    {{ data.time if data and data.time else '2026/10/16 10:15' }}
+                </span>
+            </p>
+
+            <p>
+                <strong>設置場所:</strong>
+                <span>
+                    {{ data.location if data and data.location else 'A地区 ごみ投入口' }}
+                </span>
+            </p>
+
+            <p>
+                <strong>データ送信:</strong>
+                <span class="badge bg-success">
+                    管理者に送信完了
+                </span>
+            </p>
+
+            <p class="mb-0">
+                <strong>判定内容:</strong>
+                <span class="text-danger fw-bold">
+                    ⚠️ 危険物の可能性があります
+                </span>
+            </p>
+        </div>
+    </div>
+
+    <!-- 3. 操作ボタン -->
+    <div class="d-flex gap-2 mt-4 flex-wrap">
+        <a href="{{ url_for('products') }}"
+           class="btn btn-secondary">
+            トップへ戻る
+        </a>
+
+        <form action="{{ url_for('send_report') }}" method="POST">
+            <button type="submit" class="btn btn-warning fw-bold">
+                回収員へ報告する ➔
+            </button>
+        </form>
+    </div>
+
+    {% else %}
+
+    <!-- 正常時 -->
+    <div class="card my-3">
+        <div class="card-header">
+            ✅ 正常稼働ステータス
+        </div>
+
+        <div class="card-body text-center py-5">
+            <div class="display-1 text-success mb-3">✔️</div>
+
+            <h4 class="text-success fw-bold mb-3">
+                現在、異常は検出されていません
+            </h4>
+
+            <p class="text-muted mb-4">
+                システムは正常に稼働しています。
+            </p>
+
+            <a href="{{ url_for('products') }}"
+               class="btn btn-secondary">
+                トップへ戻る
+            </a>
+        </div>
+    </div>
+
+    {% endif %}
+
+</div>
+{% endblock %}

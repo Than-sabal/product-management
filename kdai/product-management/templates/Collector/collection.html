@@ -30,31 +30,29 @@
                             検知時刻: {{ item.detected_at }}
                         </small>
                     </div>
-
-                    <div class="d-flex flex-column align-items-center gap-2"
-                        style="min-width: 210px;">
+                    <div class="d-flex align-items-center gap-2">
 
                         <!-- 詳細ボタン -->
                         <a href="{{ url_for('collection_detail', request_id=item.id) }}"
-                        class="btn btn-outline-primary rounded-pill"
-                        style="width: 180px; font-size: 20px; padding: 10px;">
+                        class="btn btn-outline-success rounded-pill"
+                        style="font-size: 16px; padding: 9px 20px;">
                             詳細を見る
                         </a>
 
                         <!-- 回収完了ボタン -->
                         <form action="{{ url_for('collection_send_report') }}"
-                            method="POST">
+                            method="POST"
+                            class="m-0">
                             <input type="hidden" name="request_id" value="{{ item.id }}">
 
                             <button type="submit"
-                                    class="btn btn-success"
-                                    style="font-size: 18px;">
+                                    class="btn btn-success rounded-pill"
+                                    style="font-size: 16px; padding: 9px 20px;">
                                 回収完了を報告する
                             </button>
                         </form>
 
                     </div>
-                </div>
                 {% else %}
                 <div class="list-group-item text-muted text-center py-3">
                     現在、未回収の危険物はありません。

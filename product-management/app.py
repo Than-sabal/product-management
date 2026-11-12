@@ -6,6 +6,16 @@ app = Flask(__name__)
 has_alert = False
 detection_history =[]
 report_history = []
+
+detection_list = [
+    {
+        'id': 1,
+        'item_name': 'スプレー缶',
+        'detected_at': '2026/10/21 10:15',
+        'photo': 'default.jpg'
+    }
+]
+detections_list = detection_list
 # =========================
 
 # ログイン
@@ -155,22 +165,8 @@ def report_completed():
 @app.route('/collection')
 
 def collection_view():
-    detections = [
-        {
-
-            'id': 1,
-
-            'item_name': 'スプレー缶',
-
-            'location': '第1作業区',
-
-            'detected_at': '2026/10/21 10:15'
-
-        }
-
-    ]
-
-    return render_template('Collector/collection.html', detections=detections)
+    global detection_list,detection_list
+    return render_template('Collector/collection.html', detections=detections_list)
  
 # 回収員：回収完了登録・報告フォーム画面
 
@@ -214,6 +210,14 @@ def collection_detail():
 def collection_history():
 # 回収員が過去に行った報告のリスト
    return render_template("Collector/collection_history.html", report_list=report_history)
+
+# 回収員：検知情報の削除処理
+@app.route('/collection/delete/<int:item_id>', methods=['GET', 'POST'])
+def collection_delete(item_id):
+   global detections_list
+   # 指定された ID 以外のものだけを残す（＝該当データを削除する）
+   detections_list = [item for item in detections_list if item['id'] != item_id]
+   return redirect(url_for('collection_view'))
 
 # 管理者：回収員からの報告受信箱 (Mailbox)
 @app.route("/admin/mailbox")

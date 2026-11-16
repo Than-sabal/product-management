@@ -1,0 +1,84 @@
+
+{% extends "base.html" %}
+
+{% block title %}検知写真・詳細確認{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 850px;">
+    <div class="card shadow-sm border-0 rounded-4">
+
+        <div class="card-header bg-primary text-white p-3 rounded-top-4">
+            <h4 class="mb-0 fw-bold">📷 検知写真 ＆ 詳細情報</h4>
+        </div>
+
+        <div class="card-body p-4 text-center">
+
+            <!-- 検知写真 -->
+            <div class="mb-4 bg-light p-3 rounded-3">
+                {% if item.photo %}
+                    <img
+                        src="{{ url_for('static', filename='uploads/' + item.photo) }}"
+                        class="img-fluid rounded shadow-sm"
+                        alt="検知写真"
+                        style="max-height: 380px; object-fit: contain;"
+                    >
+                {% else %}
+                    <div class="d-flex align-items-center justify-content-center bg-secondary-subtle rounded"
+                         style="height: 250px;">
+                        <div class="text-secondary">
+                            <i class="bi bi-camera fs-1"></i>
+                            <p class="mb-0 mt-2">写真は添付されていません</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- 検知情報 -->
+            <table class="table table-bordered text-start mb-4">
+                <tr>
+                    <th style="width: 22%;">対象物</th>
+                    <td>
+                        <span class="badge bg-danger">
+                            {{ item.item_name }}
+                        </span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>場所</th>
+                    <td>{{ item.location }}</td>
+                </tr>
+
+                <tr>
+                    <th>検知日時</th>
+                    <td>{{ item.detected_at }}</td>
+                </tr>
+
+                <tr>
+                    <th>備考</th>
+                    <td>{{ item.memo or "特記事項なし" }}</td>
+                </tr>
+            </table>
+
+            <!-- 操作ボタン -->
+            <div class="d-flex justify-content-between flex-wrap gap-2">
+
+                <a href="{{ url_for('collection_page') }}"
+                   class="btn btn-outline-secondary rounded-pill px-4">
+                    戻る
+                </a>
+
+                <a href="{{ url_for(
+                    'collection_report_form',
+                    request_id=item.id
+                ) }}"
+                   class="btn btn-success rounded-pill px-4">
+                    回収完了報告へ進む ➔
+                </a>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

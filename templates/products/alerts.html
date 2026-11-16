@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}
+
+危険物検知情報 - ごみ分別ナビ
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+<h2>🚨 危険物検知情報</h2>
+<p>ごみ投入口において、センサーが危険物の反応を検知しました。</p>
+<!-- 1. 撮影された画像・動画の表示エリア-->
+<div class="card my-3">
+<div class="card-header">📷 人物の撮影 (動画・写真)</div>
+<div class="card-body text-center">
+
+            {% if data and data.image_url %}
+<img src="{{ data.image_url }}" alt="検知画像" style="max-width: 100%; height: auto; border-radius: 8px;">
+
+            {% else %}
+<p class="text-muted">撮影された画像・動画がここに表示されます</p>
+
+            {% endif %}
+</div>
+</div>
+<!-- 2. 検知情報・通知管理-->
+<div class="card my-3">
+<div class="card-header">ℹ️ 検知情報・通知管理</div>
+<div class="card-body">
+<p><strong>ステータス:</strong> <span class="badge bg-danger">{{ data.status if data else '金属検知 (異常あり)' }}</span></p>
+<p><strong>検知日時:</strong> <span>{{ data.time if data else '2026/10/19 10:22' }}</span></p>
+<p><strong>設置場所:</strong> <span>{{ data.location if data else 'A地区 ごみ投入口' }}</span></p>
+</div>
+</div>
+<!-- 回収員へ報告する -->
+<div class="d-flex gap-2 mt-4">
+<a href="{{ url_for('products') }}" class="btn btn-secondary">トップへ戻る</a>
+<a href="{{ url_for('report') }}" class="btn btn-warning fw-bold">回収員へ報告する ➔</a>
+</div>
+</div>
+ {% endblock %}

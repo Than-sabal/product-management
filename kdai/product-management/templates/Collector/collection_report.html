@@ -1,0 +1,60 @@
+
+{% extends "base.html" %}
+
+{% block title %}回収完了の登録・報告{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-success text-white p-3 rounded-top-4">
+            <h4 class="mb-0 fw-bold">回収完了の登録・通知</h4>
+        </div>
+
+        <div class="card-body p-4">
+            <form action="{{ url_for('collection_send_report') }}" method="POST">
+
+                <!-- 対象の回収依頼ID -->
+                <input type="hidden" name="request_id" value="{{ item.id }}">
+
+                <!-- 対象の検知物品情報 -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">対象の検知情報</label>
+                    <input type="text"
+                           class="form-control bg-light"
+                           value="{{ item.item_name }}（{{ item.location }}）"
+                           readonly>
+                    <small class="text-muted">
+                        検知時刻: {{ item.detected_at }}
+                    </small>
+                </div>
+
+                <!-- 回収者のメモ・報告内容 -->
+                <div class="mb-4">
+                    <label for="memo" class="form-label fw-bold">
+                        回収完了メモ / 特記事項
+                    </label>
+                    <textarea class="form-control"
+                              id="memo"
+                              name="memo"
+                              rows="4"
+                              placeholder="例: 安全に回収し、指定の危険物保管庫へ移動しました。"></textarea>
+                </div>
+
+                <!-- ボタン -->
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('collection_page') }}"
+                       class="btn btn-outline-secondary rounded-pill px-4">
+                        キャンセル
+                    </a>
+
+                    <button type="submit"
+                            class="btn btn-success rounded-pill px-4">
+                        完了登録 ＆ 報告送信
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

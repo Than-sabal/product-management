@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base2.html" %}
 
 {% block title %}検知写真・詳細確認{% endblock %}
 
@@ -19,15 +19,29 @@
 <tr><th>検知日時</th><td>2026/10/21 10:15</td></tr>
 <tr><th>備考</th><td>ベルトコンベア付近で危険物を検知しました。</td></tr>
 </table>
-<div class="d-flex justify-content-between">
-<a href="{{ url_for('collection_view') }}" class="btn btn-outline-secondary rounded-pill px-4">
+
+<!-- 操作ボタン -->
+<div class="d-flex justify-content-between flex-wrap gap-2">
+<a href="{{ url_for('collection_view') }}"
+
+                   class="btn btn-outline-secondary rounded-pill px-4">
 
                     戻る
 </a>
-<a href="{{ url_for('collection_report_form') }}" class="btn btn-success rounded-pill px-4">
+<form method="POST"
 
-                    回収完了報告へ進む ➔
-</a>
+                      action="{{ url_for('collection_confirm', request_id=item.id) }}"
+
+                      onsubmit="return confirm('この詳細を確認済みにして、履歴に保存しますか？');">
+<button type="submit"
+
+                            class="btn btn-success rounded-pill px-4">
+<i class="bi bi-check-circle me-1"></i>
+
+                        確認して履歴に保存
+</button>
+</form>
+</div>
 </div>
 </div>
 </div>

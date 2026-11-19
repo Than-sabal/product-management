@@ -34,7 +34,7 @@ def login():
 
     if request.method == "POST":
 
-        return redirect(url_for("products"))
+        return redirect(url_for("collection_view"))
 
     return render_template("login.html")
 
@@ -203,7 +203,9 @@ def collection_send_report():
 # 回収員：検知写真・詳細確認画面
 @app.route("/collection/detail")
 def collection_detail():
-   return render_template("Collector/detail.html")
+    item_id = request.args.get("item_id", type=int)
+    selected_item = next((item for item in detections_list if item['id'] == item_id),None)
+    return render_template("Collector/detail.html", item = selected_item)
 
 # 回収員：過去の報告履歴画面
 @app.route("/collection/history")
@@ -218,6 +220,36 @@ def collection_delete(item_id):
    # 指定された ID 以外のものだけを残す（＝該当データを削除する）
    detections_list = [item for item in detections_list if item['id'] != item_id]
    return redirect(url_for('collection_view'))
+
+# 回収員：確認して履歴に保存
+@app.route('/collection/confirm/<int:request_id>', methods=['POST'])
+
+def collection_confirm(request_id):
+
+    global detections_list
+
+    completed_item = next((item for item in detections_list if item['id'] == request_id), None)
+
+    if completed_item:
+
+        detections_list = [item for item in detections_list if item['id'] != request_id]
+
+        current_time = datetime.now().strftime("%Y/%m/%d %H:%M")
+
+        new_report = {
+
+            "time": current_time,
+
+            "target": "回収員 (Staff)",
+
+            "message": f"確認・回収完了: {completed_item.get('item_name')} ({completed_item.get('location', '位置情報なし')})"
+
+        }
+
+        report_history.insert(0, new_report)
+
+    return redirect(url_for('collection_view'))
+ 
 
 # 管理者：回収員からの報告受信箱 (Mailbox)
 @app.route("/admin/mailbox")

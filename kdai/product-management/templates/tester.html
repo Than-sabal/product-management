@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}
+テスター専用コントロールパネル - ごみ分別ナビ
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 650px;">
+    <div class="card shadow-lg border-0 rounded-4 p-5 text-center bg-white">
+        <h2 class="mb-4 text-primary fw-bold">
+            <i class="bi bi-sliders me-2"></i> テスター専用コントロールパネル
+        </h2>
+
+        <form id="testAlertForm"
+              action="{{ url_for('trigger_test_alert') }}"
+              method="POST"
+              enctype="multipart/form-data">
+
+            <input type="hidden" name="latitude" id="latitude">
+            <input type="hidden" name="longitude" id="longitude">
+
+            <button id="detectButton"
+                    type="button"
+                    class="btn btn-danger btn-lg px-5 py-4 rounded-pill fw-bold shadow-lg fs-4 w-100">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                🚨 金属検知テストを実行する
+            </button>
+
+            <div class="mb-3 mt-4 text-start">
+                <label for="formFile" class="form-label fw-bold">📸 写真添付</label>
+                <input class="form-control" type="file" id="formFile"
+                       name="attachment_photo" accept="image/*">
+                <div class="form-text">検知された箇所の写真をアップロードしてください。</div>
+            </div>
+        </form>
+
+        <div id="gpsMessage" class="small mt-3" aria-live="polite"></div>
+
+        <div class="mt-4">
+            {% if has_alert %}
+            <div class="alert alert-danger mt-3 shadow-sm rounded-3 py-3" role="alert">
+                ⚠️ 危険物検知の処理（警告表示・情報保存・回収依頼送信）が実行されました！
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const form = document.getElementById("testAlertForm");
+    const button = document.getElementById("detectButton");
+    const message = document.getElementById("gpsMessage");
+    const latitudeInput = document.getElementById("latitude");
+    const longitudeInput = document.getElementById("longitude");
+
+    button.addEventListener("click", function () {
+        button.disabled = true;
+        message.className = "small mt-3 text-primary";
+        message.textContent = "現在地を取得しています...";
+
+        if (!navigator.geolocation) {
+            message.className = "small mt-3 text-danger";
+            message.textContent = "このブラウザでは位置情報を取得できません。";
+            button.disabled = false;
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                latitudeInput.value = position.coords.latitude;
+                longitudeInput.value = position.coords.longitude;
+                message.className = "small mt-3 text-success";
+                message.textContent = "現在地を取得しました。検知情報を送信します。";
+                form.submit();
+            },
+            function (error) {
+                button.disabled = false;
+                message.className = "small mt-3 text-danger";
+                if (error.code === error.PERMISSION_DENIED) {
+                    message.textContent = "位置情報が許可されていません。ブラウザの位置情報を許可してください。";
+                } else if (error.code === error.TIMEOUT) {
+                    message.textContent = "位置情報の取得がタイムアウトしました。もう一度お試しください。";
+                } else {
+                    message.textContent = "現在地を取得できませんでした。位置情報の設定を確認してください。";
+                }
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
+            }
+        );
+    });
+})();
+</script>
+{% endblock %}

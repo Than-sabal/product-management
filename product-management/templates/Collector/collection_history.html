@@ -16,6 +16,7 @@
 <th>報告日時</th>
 <th>送信先</th>
 <th>内容</th>
+<th>操作</th>
 </tr>
 </thead>
 <tbody>
@@ -25,6 +26,11 @@
 <td>{{ report.time }}</td>
 <td><span class="badge bg-primary">{{ report.target }}</span></td>
 <td>{{ report.message }}</td>
+<td>
+<form method="POST" action="{{ url_for('report_delete', report_id=loop.index0) }}" onsubmit="return confirm('本当に削除しますか？');" style="display:inline;">
+<button type="submit" class="btn btn-sm btn-outline-danger">削除</button>
+</form>
+</td>
 </tr>
 
                     {% endfor %}

@@ -257,6 +257,13 @@ def admin_mailbox():
    # 回収員から送られてきたレポート一覧を管理者画面に表示する
    return render_template("products/admin_mailbox.html", report_list=report_history)
 
+@app.route('/collection/history/delete/<int:report_id>', methods=['POST'])
+
+def report_delete(report_id):
+    if 0 <= report_id < len (report_history):
+        report_history.pop(report_id)
+    return redirect(url_for('collection_history'))
+
 if __name__ == "__main__":
 
     app.run(

@@ -1,0 +1,317 @@
+
+{% extends "base.html" %}
+
+{% block title %}管理者受信箱 | ごみ分別ナビ{% endblock %}
+
+{% block content %}
+<style>
+.mail-app {
+    display: grid;
+    grid-template-columns: 190px minmax(260px, 340px) minmax(300px, 1fr);
+    min-height: 650px;
+    background: #fff;
+    border: 1px solid #d9dee5;
+    border-radius: 12px;
+    overflow: hidden;
+    color: #263238;
+}
+.mail-folders {
+    background: #f4f6f8;
+    padding: 18px 12px;
+    border-right: 1px solid #e0e5ea;
+}
+.mail-list {
+    border-right: 1px solid #e0e5ea;
+    min-width: 0;
+}
+.mail-reading {
+    min-width: 0;
+    padding: 24px;
+}
+.mail-brand {
+    font-size: 19px;
+    font-weight: 700;
+    margin: 4px 8px 22px;
+    color: #16794f;
+}
+.mail-folder {
+    display: block;
+    padding: 11px 12px;
+    border-radius: 7px;
+    margin-bottom: 5px;
+    text-decoration: none;
+    color: #293642;
+}
+.mail-folder:hover,
+.mail-folder.active {
+    background: #dcebe5;
+    color: #126343;
+}
+.mail-folder-count {
+    float: right;
+    font-weight: 700;
+}
+.mail-toolbar {
+    padding: 16px;
+    border-bottom: 1px solid #e5e9ed;
+}
+.mail-search {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cbd3dc;
+    border-radius: 7px;
+    box-sizing: border-box;
+}
+.mail-heading {
+    font-size: 19px;
+    font-weight: 700;
+    margin: 12px 0;
+}
+.mail-item {
+    display: block;
+    padding: 15px 16px;
+    border-bottom: 1px solid #e9edf1;
+    color: #293642;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+.mail-item:hover {
+    background: #f3f7fb;
+}
+.mail-item.selected {
+    background: #e8f1fa;
+    border-left: 4px solid #2877bd;
+    padding-left: 12px;
+}
+.mail-item.unread .mail-sender,
+.mail-item.unread .mail-subject {
+    font-weight: 700;
+}
+.mail-sender {
+    font-size: 13px;
+    margin-bottom: 7px;
+}
+.mail-subject {
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+.mail-preview, .mail-date {
+    color: #687684;
+    font-size: 12px;
+}
+.mail-date { margin-top: 7px; }
+.mail-reading h2 {
+    font-size: 24px;
+    margin: 8px 0 20px;
+    overflow-wrap: anywhere;
+}
+.mail-body {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    line-height: 1.9;
+    margin-top: 24px;
+}
+.mail-action {
+    border: 0;
+    border-radius: 6px;
+    padding: 9px 13px;
+    cursor: pointer;
+    background: #176b50;
+    color: white;
+}
+.mail-action.danger { background: #b83240; }
+.mail-action.secondary { background: #64727d; }
+.mail-empty {
+    color: #71808e;
+    text-align: center;
+    padding: 50px 14px;
+}
+.mail-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: #e2f2e8;
+    color: #176b50;
+    font-size: 12px;
+}
+@media (max-width: 900px) {
+    .mail-app {
+        grid-template-columns: 150px minmax(220px, 1fr);
+    }
+    .mail-reading {
+        grid-column: 1 / -1;
+        border-top: 1px solid #e0e5ea;
+    }
+}
+@media (max-width: 560px) {
+    .mail-app {
+        grid-template-columns: 1fr;
+    }
+    .mail-folders, .mail-list {
+        border-right: 0;
+        border-bottom: 1px solid #e0e5ea;
+    }
+}
+</style>
+
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h1 class="h3 mb-1">📬 管理者受信箱</h1>
+            <div class="text-muted">回収員からの報告メール</div>
+        </div>
+        <span class="mail-badge">
+            未読 {{ unread_count }} 件
+        </span>
+    </div>
+
+    <div class="mail-app">
+        <!-- 左：フォルダ -->
+        <aside class="mail-folders">
+            <div class="mail-brand">✉ ごみ分別ナビ</div>
+
+            <a class="mail-folder {% if folder == 'inbox' %}active{% endif %}"
+               href="{{ url_for('admin_mailbox', folder='inbox') }}">
+                📥 受信トレイ
+            </a>
+
+            <a class="mail-folder {% if folder == 'unread' %}active{% endif %}"
+               href="{{ url_for('admin_mailbox', folder='unread') }}">
+                ✉ 未読
+                <span class="mail-folder-count">{{ unread_count }}</span>
+            </a>
+
+            <a class="mail-folder {% if folder == 'all' %}active{% endif %}"
+               href="{{ url_for('admin_mailbox', folder='all') }}">
+                🗂 すべて
+            </a>
+
+            <a class="mail-folder {% if folder == 'deleted' %}active{% endif %}"
+               href="{{ url_for('admin_mailbox', folder='deleted') }}">
+                🗑 削除済み
+            </a>
+
+            <hr>
+            <a class="mail-folder" href="{{ url_for('products') }}">
+                🏠 トップ画面
+            </a>
+        </aside>
+
+        <!-- 中央：メール一覧 -->
+        <section class="mail-list">
+            <div class="mail-toolbar">
+                <form method="GET" action="{{ url_for('admin_mailbox') }}">
+                    <input type="hidden" name="folder" value="{{ folder }}">
+                    <input class="mail-search"
+                           type="search"
+                           name="q"
+                           value="{{ q }}"
+                           placeholder="送信者・本文・日時を検索">
+                    <button class="mail-action mt-2" type="submit">
+                        🔍 検索
+                    </button>
+                </form>
+                <div class="mail-heading">
+                    {% if folder == 'unread' %}
+                        未読メール
+                    {% elif folder == 'all' %}
+                        すべてのメール
+                    {% elif folder == 'deleted' %}
+                        削除済み
+                    {% else %}
+                        受信トレイ
+                    {% endif %}
+                </div>
+            </div>
+
+            {% for message in messages %}
+                <a class="mail-item
+                    {% if not message['is_read'] and not message['is_deleted'] %}unread{% endif %}
+                    {% if selected_message and selected_message['id'] == message['id'] %}selected{% endif %}"
+                   href="{{ url_for('admin_mailbox', folder=folder, q=q, selected=message['id']) }}">
+                    <div class="mail-sender">
+                        {% if not message['is_read'] and not message['is_deleted'] %}🔵 {% endif %}
+                        {{ message['sender'] }}
+                    </div>
+                    <div class="mail-subject">回収完了報告</div>
+                    <div class="mail-preview">
+                        {{ message['message'][:65] }}{% if message['message']|length > 65 %}…{% endif %}
+                    </div>
+                    <div class="mail-date">{{ message['time'] }}</div>
+                </a>
+            {% else %}
+                <div class="mail-empty">
+                    📭 メールはありません
+                </div>
+            {% endfor %}
+        </section>
+
+        <!-- 右：メール本文 -->
+        <section class="mail-reading">
+            {% if selected_message %}
+                <div class="text-muted small">
+                    {{ selected_message['time'] }}
+                </div>
+                <h2>回収完了報告</h2>
+
+                <div class="mb-3">
+                    <strong>送信者：</strong>
+                    {{ selected_message['sender'] }}
+                </div>
+                <div class="mb-3">
+                    <strong>宛先：</strong>
+                    {{ selected_message['target'] }}
+                </div>
+                <div class="mb-3">
+                    <strong>報告日時：</strong>
+                    {{ selected_message['time'] }}
+                </div>
+
+                <hr>
+
+                <div class="mail-body">{{ selected_message['message'] }}</div>
+
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    {% if selected_message['is_deleted'] %}
+                        <form method="POST"
+                              action="{{ url_for('admin_mailbox_restore', message_id=selected_message['id']) }}">
+                            <button class="mail-action" type="submit">
+                                ↩ 復元
+                            </button>
+                        </form>
+                    {% else %}
+                        <form method="POST"
+                              action="{{ url_for('admin_mailbox_delete', message_id=selected_message['id']) }}"
+                              onsubmit="return confirm('このメールを削除済みに移動しますか？');">
+                            <button class="mail-action danger" type="submit">
+                                🗑 削除
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="mail-empty">
+                    <div style="font-size:42px;">📩</div>
+                    <h3 class="h5 mt-3">メールを選択してください</h3>
+                    <p>中央の一覧からメールを選ぶと、ここに本文が表示されます。</p>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+
+<script>
+    // 3秒ごとに最新メールを取得
+    // 入力中の検索文字がある場合は自動更新しない
+    setInterval(function () {
+        const active = document.activeElement;
+        if (active && active.name === "q") return;
+
+        const params = new URLSearchParams(window.location.search);
+        const selected = params.get("selected");
+
+        // 検索語はURLに残して更新する
+        window.location.reload();
+    }, 3000);
+</script>
+{% endblock %}

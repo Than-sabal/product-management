@@ -166,10 +166,17 @@
 
                         <div>
 
+                            {% if item.confirmed %}
+                            <span class="badge bg-success mb-1 px-2 py-1">
+                                <i class="bi bi-check-circle-fill me-1"></i>
+                                未回収（確認済み）
+                            </span>
+                            {% else %}
                             <span class="badge bg-warning text-dark mb-1 px-2 py-1">
                                 <i class="bi bi-exclamation-triangle-fill me-1"></i>
                                 未対応
                             </span>
+                            {% endif %}
 
                             <h5 class="fw-bold text-dark mb-1">
                                 📍 {{ item.location }}
@@ -251,7 +258,7 @@
     height: 24px;
     left: 3px;
     top: 2px;
-    background: #ec168c;
+    background: #dc3545;
     border: 2px solid white;
     border-radius: 50% 50% 50% 0;
     transform: rotate(-45deg);
@@ -285,6 +292,18 @@
         box-shadow: 0 0 18px 8px rgba(255,0,0,.7);
         transform: rotate(-45deg) scale(1.3);
     }
+}
+
+/* 詳細確認済み・未回収のピン */
+.collection-pin-confirmed::before {
+    background: #198754;
+}
+
+/* 確認済みピンは接近警告の点滅対象にしない */
+.collection-pin-confirmed.collection-pin-alert::before {
+    animation: none;
+    background: #198754;
+    box-shadow: 0 2px 5px rgba(0,0,0,.35);
 }
 
 .collection-popup {
@@ -558,19 +577,20 @@
     // ピンク色のマーカー
     // =========================
 
-    const pinkIcon = L.divIcon({
+    function createCollectionIcon(confirmed) {
 
-        className: '',
+        const pinClass = confirmed
+            ? 'collection-pin collection-pin-confirmed'
+            : 'collection-pin';
 
-        html: '<div class="collection-pin"></div>',
-
-        iconSize: [30, 40],
-
-        iconAnchor: [15, 40],
-
-        popupAnchor: [0, -38]
-
-    });
+        return L.divIcon({
+            className: '',
+            html: `<div class="${pinClass}"></div>`,
+            iconSize: [30, 40],
+            iconAnchor: [15, 40],
+            popupAnchor: [0, -38]
+        });
+    }
 
     // =========================
     // 検知情報を地図に表示
@@ -594,10 +614,12 @@
             return;
         }
 
+        const confirmed = Number(item.confirmed || 0) === 1;
+
         const marker = L.marker(
             [lat, lng],
             {
-                icon: pinkIcon
+                icon: createCollectionIcon(confirmed)
             }
         ).addTo(map);
 
@@ -621,7 +643,9 @@
 
         }
 
-        const status = item.status || '未回収';
+        const status = confirmed
+            ? '未回収（詳細確認済み）'
+            : '未対応';
 
         const detailUrl =
             {{ url_for('collection_detail') | tojson }} +
@@ -679,6 +703,7 @@
             lat: lat,
             lng: lng,
             alerting: false,
+            confirmed: confirmed,
             popupHTML: popup
 
         });
@@ -820,6 +845,11 @@
         }
 
         detectionMarkers.forEach(function(item) {
+
+            // 詳細確認済みの緑ピンは接近警告で色を変えない
+            if (item.confirmed) {
+                return;
+            }
 
             const distance = getDistance(
                 lat,

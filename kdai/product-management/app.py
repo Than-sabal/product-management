@@ -538,7 +538,7 @@ def map_page():
                 ) AS request_id
             FROM detection_history AS dh
             WHERE dh.latitude IS NOT NULL
-              AND dh.longitude IS NOT NULL
+            AND dh.longitude IS NOT NULL
             ORDER BY dh.id DESC
         """).fetchall()
 
@@ -652,7 +652,6 @@ def collection_page():
             LEFT JOIN detection_history AS dh
                 ON cr.detection_id = dh.id
             WHERE cr.status = '未回収'
-              AND COALESCE(cr.confirmed, 0) = 0
         """
 
         params = []
@@ -788,30 +787,63 @@ def collection_page():
 @role_required("collector")
 def collection_detail():
 
-    request_id = request.args.get(
-        "request_id", type=int
-    )
+    request_id = request.args.get("request_id", type=int)
+
+    if request_id is None:
+        flash("対象の回収依頼が指定されていません。", "warning")
+        return redirect(url_for("collection_page"))
+
+    now = current_time()
+    collector_name = session.get("username", "回収員")
 
     with get_db() as conn:
 
+        # 未回収の依頼を取得
         item = conn.execute("""
             SELECT *
             FROM collection_requests
             WHERE id = ?
-        """, (
-            request_id,
-        )).fetchone()
+              AND status = '未回収'
+        """, (request_id,)).fetchone()
 
-    if item is None:
+        if item is None:
+            flash("対象の回収依頼が見つからないか、回収完了済みです。", "warning")
+            return redirect(url_for("collection_page"))
 
-        flash(
-            "対象の回収依頼が見つかりません。",
-            "warning"
-        )
+        # 詳細画面を初めて開いたタイミングで確認済みにする
+        if int(item["confirmed"] or 0) == 0:
+            conn.execute("""
+                UPDATE collection_requests
+                SET confirmed = 1,
+                    confirmed_at = ?,
+                    status = '未回収'
+                WHERE id = ?
+                  AND status = '未回収'
+                  AND COALESCE(confirmed, 0) = 0
+            """, (now, request_id))
 
-        return redirect(
-            url_for("collection_page")
-        )
+            # 確認履歴を一度だけ記録
+            message = (
+                "詳細確認完了\n"
+                f"対象物：{item['item_name']}\n"
+                f"場所：{item['location']}\n"
+                f"検知日時：{item['detected_at']}\n"
+                f"確認日時：{now}\n"
+                f"確認者：{collector_name}"
+            )
+
+            conn.execute("""
+                INSERT INTO collection_history (
+                    reported_at, target, message, sender, is_read, is_deleted
+                ) VALUES (?, ?, ?, ?, 0, 0)
+            """, (now, "詳細確認履歴", message, collector_name))
+
+        # 更新後の状態で詳細画面を表示
+        item = conn.execute("""
+            SELECT *
+            FROM collection_requests
+            WHERE id = ?
+        """, (request_id,)).fetchone()
 
     return render_template(
         "Collector/detail.html",
@@ -820,21 +852,18 @@ def collection_detail():
 
 
 # =========================
-# 回収員：詳細確認完了
+# 回収員：回収完了
 # =========================
 
 @app.route(
-    "/collection/confirm/<int:request_id>",
+    "/collection/complete/<int:request_id>",
     methods=["POST"]
 )
 @role_required("collector")
-def collection_confirm(request_id):
+def collection_complete(request_id):
 
     now = current_time()
-
-    collector_name = session.get(
-        "username", "回収員"
-    )
+    collector_name = session.get("username", "回収員")
 
     with get_db() as conn:
 
@@ -843,42 +872,40 @@ def collection_confirm(request_id):
             FROM collection_requests
             WHERE id = ?
               AND status = '未回収'
-              AND COALESCE(confirmed, 0) = 0
-        """, (
-            request_id,
-        )).fetchone()
+        """, (request_id,)).fetchone()
 
         if item is None:
-
             flash(
-                "対象の依頼は既に確認済み、または存在しません。",
+                "対象の回収依頼が見つからないか、すでに回収完了しています。",
                 "warning"
             )
+            return redirect(url_for("collection_page"))
 
-            return redirect(
-                url_for("collection_page")
-            )
-
-        # ① 確認済みに変更
+        # 回収完了状態に更新する
         conn.execute("""
             UPDATE collection_requests
-            SET confirmed = 1,
-                confirmed_at = ?
+            SET status = '回収完了',
+                completed_at = ?
             WHERE id = ?
-              AND COALESCE(confirmed, 0) = 0
-        """, (
-            now,
-            request_id
-        ))
+              AND status = '未回収'
+        """, (now, request_id))
 
-        # ② 確認履歴に保存
+        # 元の検知履歴も対応済みにする
+        if item["detection_id"] is not None:
+            conn.execute("""
+                UPDATE detection_history
+                SET status = '対応済み'
+                WHERE id = ?
+            """, (item["detection_id"],))
+
+        # 回収完了履歴を保存する
         message = (
-            "詳細確認完了\n"
+            "回収完了\n"
             f"対象物：{item['item_name']}\n"
             f"場所：{item['location']}\n"
             f"検知日時：{item['detected_at']}\n"
-            f"確認日時：{now}\n"
-            f"確認者：{collector_name}"
+            f"回収完了日時：{now}\n"
+            f"回収員：{collector_name}"
         )
 
         conn.execute("""
@@ -893,19 +920,13 @@ def collection_confirm(request_id):
             VALUES (?, ?, ?, ?, 0, 0)
         """, (
             now,
-            "詳細確認履歴",
+            "回収完了履歴",
             message,
             collector_name
         ))
 
-    flash(
-        "詳細を確認し、履歴に保存しました。",
-        "success"
-    )
-
-    return redirect(
-        url_for("collection_page")
-    )
+    flash("回収が完了し、履歴に保存しました。", "success")
+    return redirect(url_for("collection_page"))
 
 
 # =========================
@@ -953,7 +974,7 @@ def collection_history_delete(report_id):
         conn.execute("""
             DELETE FROM collection_history
             WHERE id = ?
-              AND sender = ?
+            AND sender = ?
         """, (
             report_id,
             session.get("username")

@@ -12,6 +12,14 @@
 
         <div class="card-body p-4 text-center">
 
+            <!-- 詳細画面を開いた時点で確認済み -->
+            <div class="mb-3">
+                <span class="badge bg-success fs-6 px-3 py-2">
+                    <i class="bi bi-check-circle-fill me-1"></i>
+                    確認済み・未回収
+                </span>
+            </div>
+
             <!-- 検知写真 -->
             <div class="mb-4 bg-light p-3 rounded-3">
                 {% if item.photo %}
@@ -36,49 +44,46 @@
             <table class="table table-bordered text-start mb-4">
                 <tr>
                     <th style="width: 22%;">対象物</th>
-                    <td>
-                        <span class="badge bg-danger">
-                            {{ item.item_name }}
-                        </span>
-                    </td>
+                    <td><span class="badge bg-danger">{{ item.item_name }}</span></td>
                 </tr>
-
                 <tr>
                     <th>場所</th>
                     <td>{{ item.location }}</td>
                 </tr>
-
                 <tr>
                     <th>検知日時</th>
                     <td>{{ item.detected_at }}</td>
                 </tr>
-
                 <tr>
                     <th>備考</th>
                     <td>{{ item.memo or "特記事項なし" }}</td>
                 </tr>
+                <tr>
+                    <th>確認日時</th>
+                    <td>{{ item.confirmed_at or "未確認" }}</td>
+                </tr>
+                <tr>
+                    <th>回収状態</th>
+                    <td><span class="badge bg-warning text-dark">未回収</span></td>
+                </tr>
             </table>
 
-            <!-- 操作ボタン -->
+            <!-- 回収完了操作 -->
             <div class="d-flex justify-content-between flex-wrap gap-2">
-
                 <a href="{{ url_for('collection_page') }}"
                    class="btn btn-outline-secondary rounded-pill px-4">
                     戻る
                 </a>
 
                 <form method="POST"
-                      action="{{ url_for('collection_confirm', request_id=item.id) }}"
-                      onsubmit="return confirm('この詳細を確認済みにして、履歴に保存しますか？');">
-
+                      action="{{ url_for('collection_complete', request_id=item.id) }}"
+                      onsubmit="return confirm('この検知物を回収完了にして、履歴に保存しますか？');">
                     <button type="submit"
                             class="btn btn-success rounded-pill px-4">
-                        <i class="bi bi-check-circle me-1"></i>
-                        確認して履歴に保存
+                        <i class="bi bi-check-circle-fill me-1"></i>
+                        回収完了する
                     </button>
-
                 </form>
-
             </div>
 
         </div>

@@ -1,0 +1,38 @@
+@startuml
+title ごみ分別ナビ・危険物検知ナビ\n回収員の確認・回収完了履歴 シーケンス図
+
+actor "回収員" as Collector
+boundary "検知一覧画面" as List
+boundary "検知詳細画面" as Detail
+boundary "回収完了画面" as Complete
+control "Flask\n(app.py)" as Flask
+database "検知履歴DB" as DetectionDB
+database "回収履歴DB" as HistoryDB
+
+Collector -> List : 1. 検知一覧画面を開く
+List -> Flask : 2. 検知情報を要求
+Flask -> DetectionDB : 3. 未対応の検知情報を取得
+DetectionDB --> Flask : 4. 検知データを返す
+Flask --> List : 5. 検知一覧を返す
+List --> Collector : 6. 検知一覧を表示
+
+Collector -> List : 7. 対象の危険物を選択
+List -> Flask : 8. 検知詳細を要求
+Flask -> DetectionDB : 9. 対象の検知情報を取得
+DetectionDB --> Flask : 10. 検知情報を返す
+Flask --> Detail : 11. 検知詳細を返す
+Detail --> Collector : 12. 検知場所・内容を確認
+
+Collector -> Complete : 13. 回収完了を入力
+Collector -> Complete : 14. 回収完了ボタンを押す
+Complete -> Flask : 15. 回収完了を送信
+
+Flask -> DetectionDB : 16. 検知状態を対応済みに更新
+Flask -> HistoryDB : 17. 回収完了履歴を保存
+HistoryDB --> Flask : 18. 保存完了
+DetectionDB --> Flask : 19. 更新完了
+
+Flask --> Complete : 20. 回収完了結果を返す
+Complete --> Collector : 21. 回収完了メッセージを表示
+
+@enduml
